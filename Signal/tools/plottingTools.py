@@ -4,6 +4,8 @@ import json
 from collections import OrderedDict as od
 from commonObjects import *
 
+
+process, category = "",""
 def LoadTranslations(jsonfilename):
     with open(jsonfilename) as jsonfile:
         return json.load(jsonfile)
@@ -183,7 +185,12 @@ def plotFTestResults(ssfs,_opt,_outdir="./",_extension='',_proc='',_cat='',_mass
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Signal fit plots
 # Plot final pdf at MH = 125 (with data) + individual Pdf components
+
 def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
+  global process
+  process = _proc
+  global category 
+  category = _cat
   canv = ROOT.TCanvas()
   canv.SetLeftMargin(0.15)
   ssf.MH.setVal(125)
@@ -193,6 +200,7 @@ def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
   hmax, hmin = 0, 0
   # Total pdf histogram
   hists['final'] = ssf.Pdfs['final'].createHistogram("h_final%s"%_extension,ssf.xvar,ROOT.RooFit.Binning(1600))
+  #print("integral 2 : ",hists['final'].Integral())
   hists['final'].SetLineWidth(2)
   hists['final'].SetLineColor(1)
   hists['final'].SetTitle("")
@@ -202,10 +210,12 @@ def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
   if hists['final'].GetMinimum()<hmin: hmin = hists['final'].GetMinimum()
   #hists['final'].GetXaxis().SetRangeUser(115,140)
   hists['final'].GetXaxis().SetRangeUser(100,150)
+  print("number of bins : ",hists['final'].GetNbinsX())
   # Create data histogram
   hists['data'] = ssf.xvar.createHistogram("h_data%s"%_extension,ROOT.RooFit.Binning(ssf.nBins))
   ssf.DataHists['125'].fillHistogram(hists['data'],ROOT.RooArgList(ssf.xvar))
   hists['data'].SetTitle("")
+  
   hists['data'].GetXaxis().SetTitle("m_{#gamma#gamma} [GeV]")
   hists['data'].SetMinimum(0)
   #hists['data'].GetXaxis().SetRangeUser(115,140)
@@ -240,6 +250,7 @@ def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
       hists[k].SetLineWidth(2)
       hists[k].SetLineStyle(2)
       hists[k].Draw("HIST SAME")
+      #print("integrals : ",hists[k].Integral())
       pdfItr += 1
   # Add legend
   leg = ROOT.TLegend(0.58,0.6,0.86,0.8)
@@ -247,6 +258,8 @@ def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
   leg.SetLineColor(0)
   leg.SetTextSize(0.04)
   leg.AddEntry(hists['data'],"Simulation","ep")
+  print("bins data : ",hists['data'].GetNbinsX())
+  print("bins final : ",hists['final'].GetNbinsX())
   leg.AddEntry(hists['final'],"Parametric Model","L")
   leg.Draw("Same")
   if len(pdfs.keys())!=1:
@@ -274,6 +287,104 @@ def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
   canv.SaveAs("%s/%sshape_pdf_components_%s_%s.png"%(_outdir,_extension,_proc,_cat))
   canv.SaveAs("%s/%sshape_pdf_components_%s_%s.pdf"%(_outdir,_extension,_proc,_cat))
 
+"""
+def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''): #Tanay's version
+  canv = ROOT.TCanvas()
+  canv.SetLeftMargin(0.15)
+  ssf.MH.setVal(125)
+  LineColorMap = {0:ROOT.kAzure+1,1:ROOT.kRed-4,2:ROOT.kOrange,3:ROOT.kGreen+2,4:ROOT.kMagenta-9}
+  pdfs = od()
+  hists = od()
+  hmax, hmin = 0, 0
+  # Total pdf histogram
+  hists['final'] = ssf.Pdfs['final'].createHistogram("h_final%s"%_extension,ssf.xvar,ROOT.RooFit.Binning(1600))
+  #print("integral 2 : ",hists['final'].Integral())
+  hists['final'].SetLineWidth(2)
+  hists['final'].SetLineColor(1)
+  hists['final'].SetTitle("")
+  hists['final'].GetXaxis().SetTitle("m_{#gamma#gamma} [GeV]")
+  hists['final'].SetMinimum(0)
+  if hists['final'].GetMaximum()>hmax: hmax = hists['final'].GetMaximum()
+  if hists['final'].GetMinimum()<hmin: hmin = hists['final'].GetMinimum()
+  #hists['final'].GetXaxis().SetRangeUser(115,140)
+  hists['final'].GetXaxis().SetRangeUser(100,150)
+  print("number of bins : ",hists['final'].GetNbinsX())
+  # Create data histogram
+  #Tanay's section
+  file = ROOT.TFile("/eos/home-t/takumar/gitcode/higgsdna_finalfits_tutorial_24/05_postprocessing/ma35_only/root/ma35/output_ma35.root")  
+  directory = file.Get("DiphotonTree")
+  tree = directory.Get("ma35_125_13TeV_NOTAG")
+  hist = ROOT.TH1F("HiggsDNA_m4g", "; Mass; Entries", 80, 100, 180)
+  hist.GetXaxis().SetRangeUser(100,150)
+  
+  print("printing masses")
+  for i in range(tree.GetEntries()):  # Adjust the range to print more or fewer values
+      tree.GetEntry(i)
+      hist.Fill(tree.CMS_hgg_mass)
+      #print(tree.CMS_hgg_mass)
+  #import numpy as np
+  
+  print("max value : ",hist.GetMaximum())
+  print(hist.Integral())
+  hist.Scale(1 / (20*hist.Integral()))
+
+
+  hmax, hmin = 0, 0
+  if hist.GetMaximum()>hmax: hmax = hist.GetMaximum()
+  if hist.GetMinimum()<hmin: hmin = hist.GetMinimum()
+  hist.SetMaximum(1.2*hmax)
+  hist.SetMinimum(1.2*hmin)
+    
+  hists['data'] = ssf.xvar.createHistogram("h_data%s"%_extension,ROOT.RooFit.Binning(ssf.nBins))
+  print(hists['data'])
+  ssf.DataHists['125'].fillHistogram(hists['data'],ROOT.RooArgList(ssf.xvar))
+  hists['data'].SetTitle("")
+  print("x-min : ",hists['data'].GetXaxis().GetXmin())
+  print("x-max : ",hists['data'].GetXaxis().GetXmax()) 
+  print("integral before scaling : ",hists['data'].Integral())
+  print("max value : ",hists['data'].GetMaximum())
+  hists['data'].GetXaxis().SetTitle("m_{#gamma#gamma} [GeV]")
+  hists['data'].SetMinimum(0)
+  #hists['data'].GetXaxis().SetRangeUser(115,140)
+  hists['data'].GetXaxis().SetRangeUser(100,150)
+  hists['data'].Scale(float(ssf.nBins)/1600)  # divides values by 20
+  print("max value after scaling : ",hists['data'].GetMaximum())
+  print("integral after scaling : ",hists['data'].Integral())
+  print("bin in Scale value : ",float(ssf.nBins))
+  hists['data'].SetMarkerStyle(20)
+  hists['data'].SetMarkerColor(1)
+  hists['data'].SetLineColor(1)
+  if hists['data'].GetMaximum()>hmax: hmax = hists['data'].GetMaximum()
+  if hists['data'].GetMinimum()<hmin: hmin = hists['data'].GetMinimum()
+  # Draw histograms
+  hists['data'].SetMaximum(1.2*hmax)
+  hists['data'].SetMinimum(1.2*hmin)
+  hists['data'].Draw("PE")
+  #hist.Draw("Same HIST")
+  print("end of tanay's section")
+
+  # Add legend
+  leg = ROOT.TLegend(0.58,0.6,0.86,0.8)
+  leg.SetFillStyle(0)
+  leg.SetLineColor(0)
+  leg.SetTextSize(0.04)
+  leg.AddEntry(hists['data'],"Simulation","ep")
+  print("bins data : ",hists['data'].GetNbinsX())
+  print("bins final : ",hists['final'].GetNbinsX())
+  leg.AddEntry(hists['final'],"Parametric Model","L")
+  leg.Draw("Same")
+  if len(pdfs.keys())!=1:
+    leg1 = ROOT.TLegend(0.6,0.4,0.86,0.6)
+    leg1.SetFillStyle(0)
+    leg1.SetLineColor(0)
+    leg1.SetTextSize(0.035)
+    for k,v in pdfs.items(): leg1.AddEntry(hists[k],k,"L")
+    leg1.Draw("Same")
+
+  canv.Update()
+  canv.SaveAs("%s/%sshape_pdf_components_%s_%s.png"%(_outdir,_extension,_proc,_cat))
+  canv.SaveAs("%s/%sshape_pdf_components_%s_%s.pdf"%(_outdir,_extension,_proc,_cat))
+"""
 # Plot final pdf for each mass point
 def plotInterpolation(_finalModel,_outdir='./',_massPoints='120,121,122,123,124,125,126,127,128,129,130'):
 
@@ -290,7 +401,8 @@ def plotInterpolation(_finalModel,_outdir='./',_massPoints='120,121,122,123,124,
   for mp in _massPoints.split(","):
     _finalModel.MH.setVal(int(mp))
     hists[mp] = _finalModel.Pdfs['final'].createHistogram("h_%s"%mp,_finalModel.xvar,ROOT.RooFit.Binning(3200))
-    norm = _finalModel.Functions['final_normThisLumi'].getVal()
+    norm = _finalModel.Functions['final_normThisLumi'].getVal() 
+    #norm = 1
     if norm == 0.: hists[mp].Scale(0.)
     else: hists[mp].Scale((norm*3200)/(hists[mp].Integral()*_finalModel.xvar.getBins()))
     if mp in _finalModel.Datasets:
@@ -308,7 +420,7 @@ def plotInterpolation(_finalModel,_outdir='./',_massPoints='120,121,122,123,124,
       hists['data_%s'%mp] = _finalModel.xvar.createHistogram("h_data_%s"%mp,ROOT.RooFit.Binning(_finalModel.xvar.getBins()))
       dh[mp].fillHistogram(hists['data_%s'%mp],ROOT.RooArgList(_finalModel.xvar))
       if norm == 0.: hists['data_%s'%mp].Scale(0)
-      else: hists['data_%s'%mp].Scale(norm/(hists['data_%s'%mp].Integral()))
+      else: hists['data_%s'%mp].Scale(norm/(hists['data_%s'%mp].Integral())) 
       hists['data_%s'%mp].SetMarkerStyle(20)
       hists['data_%s'%mp].SetMarkerColor(colorMap[mp])
       hists['data_%s'%mp].SetLineColor(colorMap[mp])
@@ -347,7 +459,7 @@ def plotInterpolation(_finalModel,_outdir='./',_massPoints='120,121,122,123,124,
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot splines
-def plotSplines(_finalModel,_outdir="./",_nominalMass='125',splinesToPlot=['xs','br','ea','fracRV']):
+def plotSplines(_finalModel,_outdir="./",_nominalMass='125',splinesToPlot=['xs','br','ea']):  #splinesToPlot=['xs','br','ea','fracRV'] --originial
   canv = ROOT.TCanvas()
   colorMap = {'xs':ROOT.kRed-4,'br':ROOT.kAzure+1,'ea':ROOT.kGreen+1,'fracRV':ROOT.kMagenta-7,'norm':ROOT.kBlack}
   grs = od()
@@ -356,9 +468,13 @@ def plotSplines(_finalModel,_outdir="./",_nominalMass='125',splinesToPlot=['xs',
   # Get value at nominal mass
   xnom = od()
   _finalModel.MH.setVal(float(_nominalMass))
-  for sp in splinesToPlot: xnom[sp] = _finalModel.Splines[sp].getVal()
+  for sp in splinesToPlot: 
+      xnom[sp] = _finalModel.Splines[sp].getVal()
+      print(sp, "\t", xnom[sp])
   _finalModel.intLumi.setVal(lumiScaleFactor*float(lumiMap[_finalModel.year]))
+  #print("int lumi 2 : ",(lumiScaleFactor*float(lumiMap[_finalModel.year])))
   xnom['norm'] = _finalModel.Functions['final_normThisLumi'].getVal()
+  print("finalnorm : ",_finalModel.Functions['final_normThisLumi'].getVal())
   # Loop over mass points
   p = 0
   xmax, xmin = 0,0.5
@@ -418,8 +534,8 @@ def plotSplines(_finalModel,_outdir="./",_nominalMass='125',splinesToPlot=['xs',
   lat.SetTextSize(0.03)
   lat.DrawLatex(0.9,0.92,"%s"%(_finalModel.name))
   canv.Update()
-  canv.SaveAs("%s/%s_splines.png"%(_outdir,_finalModel.name))
-  canv.SaveAs("%s/%s_splines.pdf"%(_outdir,_finalModel.name))
+  canv.SaveAs("%s/%s_splines_%s_%s.png"%(_outdir,_finalModel.name,process,category))
+  canv.SaveAs("%s/%s_splines_%s_%s.pdf"%(_outdir,_finalModel.name,process,category))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Function for plotting final signal model: neat
@@ -441,6 +557,7 @@ def plotSignalModel(_hists,_opt,_outdir=".",offset=0.02):
   h_axes.GetXaxis().SetTitleOffset(1.)
   h_axes.GetYaxis().SetTitleSize(0.05)
   h_axes.GetYaxis().SetTitleOffset(1.2)
+  print("integral : ",h_axes.Integral())
   h_axes.Draw()
     
   # Extract effSigma
@@ -561,7 +678,7 @@ def plotSignalModel(_hists,_opt,_outdir=".",offset=0.02):
  
   lat1.DrawLatex(0.85,0.86,"%s"%catStr)
   lat1.DrawLatex(0.83,0.8,"%s %s"%(procStr,yearStr))
-
+  ROOT.gStyle.SetOptStat(111111)
   canv.Update()
 
   # Write effSigma to file

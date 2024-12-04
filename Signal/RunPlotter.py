@@ -13,7 +13,7 @@ def get_options():
   parser = OptionParser()
   parser.add_option('--procs', dest='procs', default='all', help="Comma separated list of processes to include. all = sum all signal procs")  
   parser.add_option('--years', dest='years', default='2016,2017,2018', help="Comma separated list of years to include")  
-  parser.add_option('--cats', dest='cats', default='', help="Comma separated list of analysis categories to include. all = sum of all categories, wall = weighted sum of categories (requires S/S+B from ./Plots/getCatInfo.py)")
+  parser.add_option('--cats', dest='cats', default='ALL', help="Comma separated list of analysis categories to include. all = sum of all categories, wall = weighted sum of categories (requires S/S+B from ./Plots/getCatInfo.py)")
   parser.add_option('--loadCatWeights', dest='loadCatWeights', default='', help="Load S/S+B weights for analysis categories (path to weights json file)")
   parser.add_option('--ext', dest='ext', default='test', help="Extension: defines output dir where signal models are saved")
   parser.add_option("--xvar", dest="xvar", default='CMS_hgg_mass:m_{#gamma#gamma}:GeV', help="x-var (name:title:units)")
@@ -36,20 +36,45 @@ ROOT.gStyle.SetOptStat(0)
 inputFiles = od()
 citr = 0
 if opt.cats in ['all','wall']:
-  fs = glob.glob("%s/outdir_%s/CMS-HGG_sigfit_%s_*.root"%(swd__,opt.ext,opt.ext))
+  #fs = glob.glob("%s/outdir_%s/CMS-HGG_sigfit_%s_*.root"%(swd__,opt.ext,opt.ext)) --oriug
+  fs = glob.glob("%s/outdir_%s/signalFit/output/CMS-HGG_sigfit_%s_%s_%s_%s.root"%(swd__,opt.ext,opt.ext,opt.procs,opt.years,opt.cats))
+  print("fs : ","%s/outdir_%s/signalFit/output/CMS-HGG_sigfit_%s_%s_%s_%s.root"%(swd__,opt.ext,opt.ext,opt.procs,opt.years,opt.cats))
+  print("testing")
   for f in fs:
-    cat = re.sub(".root","",f.split("/")[-1].split("_%s_"%opt.ext)[-1])
+      print(f)
+      cat = re.sub(".root","",f.split("/")[-1].split("_%s_"%opt.ext)[-1])
+      inputFiles[cat] = f
+      if citr == 0:
+          w = ROOT.TFile(f).Get("wsig_13TeV")
+          xvar = w.var(opt.xvar.split(":")[0])
+          print("test before xvar")
+          print(xvar)
+          xvar.setPlotLabel(opt.xvar.split(":")[1])
+          xvar.setUnit(opt.xvar.split(":")[2])
+          alist = ROOT.RooArgList(xvar)
+      citr += 1
+else:
+  for cat in opt.cats.split(","):
+    #f = "%s/outdir_%s/CMS-HGG_sigfit_%s_%s.root"%(swd__,opt.ext,opt.ext,cat)
+    f = "%s/outdir_%s/signalFit/output/CMS-HGG_sigfit_%s_%s_%s_%s.root"%(swd__,opt.ext,opt.ext,opt.procs,opt.years,opt.cats)
     inputFiles[cat] = f
     if citr == 0:
       w = ROOT.TFile(f).Get("wsig_13TeV")
+      
       xvar = w.var(opt.xvar.split(":")[0])
+      print("test after xvar")
       xvar.setPlotLabel(opt.xvar.split(":")[1])
       xvar.setUnit(opt.xvar.split(":")[2])
       alist = ROOT.RooArgList(xvar)
     citr += 1
-else:
-  for cat in opt.cats.split(","):
-    f = "%s/outdir_%s/CMS-HGG_sigfit_%s_%s.root"%(swd__,opt.ext,opt.ext,cat)
+      
+
+for cat in opt.cats.split(","):
+    f = "%s/outdir_%s/signalFit/output/CMS-HGG_sigfit_%s_%s_%s_%s.root"%(swd__,opt.ext,opt.ext,opt.procs,opt.years,opt.cats)
+    #print("testing")
+    #print(opt.procs)
+    print(f)
+    #f = "/eos/home-t/takumar/gitcode/higgsdna_finalfits_tutorial_24/07_FinalFits/CMSSW_14_1_0_pre4/src/flashggFinalFit/Signal/outdir_tutorial_2022preEE/signalFit/output/CMS-HGG_sigfit_tutorial_2022preEE_ma35_2016_--year.root"
     inputFiles[cat] = f
     if citr == 0:
       w = ROOT.TFile(f).Get("wsig_13TeV")
@@ -70,6 +95,7 @@ hists['data'] = xvar.createHistogram("h_data", ROOT.RooFit.Binning(opt.nBins))
 # Loop over files
 for cat,f in inputFiles.items():
   print(" --> Processing %s: file = %s"%(cat,f))
+  print("test print")
 
   # Define cat weight
   wcat = catsWeights[cat] if opt.loadCatWeights != '' else 1.
@@ -77,6 +103,7 @@ for cat,f in inputFiles.items():
   # Open signal workspace
   fin = ROOT.TFile(f)
   w = fin.Get("wsig_13TeV")
+  w.Print()
   w.var("MH").setVal(float(opt.MH))
 
   # Extract normalisations
@@ -92,14 +119,20 @@ for cat,f in inputFiles.items():
         _id = "%s_%s_%s_%s"%(proc,year,cat,sqrts__)
         norms[k] = w.function("%s_%s_normThisLumi"%(outputWSObjectTitle__,_id))
     else:
+      print(opt.procs.split(","))
       for proc in opt.procs.split(","):
         k = "%s__%s"%(proc,year)
+        print("k  ",k)
         _id = "%s_%s_%s_%s"%(proc,year,cat,sqrts__)
+        print("id   ",_id)
         norms[k] = w.function("%s_%s_normThisLumi"%(outputWSObjectTitle__,_id))
+        print("%s_%s_normThisLumi"%(outputWSObjectTitle__,_id))
     
   # Iterate over norms: extract total category norm
   catNorm = 0
+  print(norms)
   for k, norm in norms.items():
+    print("more testing: ", norm,k)
     proc, year = k.split("__")
     w.var("IntLumi").setVal(lumiScaleFactor*lumiMap[year])
     catNorm += norm.getVal()
