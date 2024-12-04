@@ -4,7 +4,7 @@ import re
 import ROOT
 import math
 from collections import OrderedDict as od
-from commonObjects import *
+from tools.commonObjects import *
 
 # Function for iterating over ROOT argsets in workspace
 def rooiter(x):
