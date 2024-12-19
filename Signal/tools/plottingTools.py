@@ -213,7 +213,10 @@ def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
   print("number of bins : ",hists['final'].GetNbinsX())
   # Create data histogram
   hists['data'] = ssf.xvar.createHistogram("h_data%s"%_extension,ROOT.RooFit.Binning(ssf.nBins))
+  print("normalization : ",hists['data'].Integral())
   ssf.DataHists['125'].fillHistogram(hists['data'],ROOT.RooArgList(ssf.xvar))
+  print("normalization : ",hists['data'].Integral())
+  print(ssf.xvar)
   hists['data'].SetTitle("")
   
   hists['data'].GetXaxis().SetTitle("m_{#gamma#gamma} [GeV]")
@@ -230,6 +233,12 @@ def plotPdfComponents(ssf,_outdir='./',_extension='',_proc='',_cat=''):
   hists['data'].SetMaximum(1.2*hmax)
   hists['data'].SetMinimum(1.2*hmin)
   hists['data'].Draw("PE")
+  bin_start = 1  # Replace with your start bin number
+  bin_end = 80
+  #print(f"Values of bins from {bin_start} to {bin_end}:")
+  #for bin in range(bin_start, bin_end + 1):  # +1 to include bin_end
+  #    bin_content = hists['data'].GetBinContent(bin)*20*44270
+  #    print(f"Bin {bin}: {bin_content}")
   hists['final'].Draw("Same HIST")
   # Individual Gaussian histograms
   for k,v in ssf.Pdfs.items():

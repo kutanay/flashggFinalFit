@@ -16,7 +16,7 @@ def get_options():
   parser.add_option('--cats', dest='cats', default='ALL', help="Comma separated list of analysis categories to include. all = sum of all categories, wall = weighted sum of categories (requires S/S+B from ./Plots/getCatInfo.py)")
   parser.add_option('--loadCatWeights', dest='loadCatWeights', default='', help="Load S/S+B weights for analysis categories (path to weights json file)")
   parser.add_option('--ext', dest='ext', default='test', help="Extension: defines output dir where signal models are saved")
-  parser.add_option("--xvar", dest="xvar", default='CMS_hgg_mass:m_{#gamma#gamma}:GeV', help="x-var (name:title:units)")
+  parser.add_option("--xvar", dest="xvar", default='CMS_hgg_mass:m_{#gamma#gamma#gamma#gamma}:GeV', help="x-var (name:title:units)")
   parser.add_option("--mass", dest="mass", default='125', help="Mass of datasets")
   parser.add_option("--MH", dest="MH", default='125', help="Higgs mass (for pdf)")
   parser.add_option("--nBins", dest="nBins", default=160, type='int', help="Number of bins")
@@ -25,7 +25,7 @@ def get_options():
   parser.add_option("--translateCats", dest="translateCats", default=None, help="JSON to store cat translations")
   parser.add_option("--translateProcs", dest="translateProcs", default=None, help="JSON to store proc translations")
   parser.add_option("--label", dest="label", default='Simulation Preliminary', help="CMS Sub-label")
-  parser.add_option("--doFWHM", dest="doFWHM", default=False, action='store_true', help="Do FWHM")
+  parser.add_option("--doFWHM", dest="doFWHM", default=True, action='store_true', help="Do FWHM")
   return parser.parse_args()
 (opt,args) = get_options()
 
@@ -48,7 +48,7 @@ if opt.cats in ['all','wall']:
           w = ROOT.TFile(f).Get("wsig_13TeV")
           xvar = w.var(opt.xvar.split(":")[0])
           print("test before xvar")
-          print(xvar)
+          print("xvar : ",xvar)
           xvar.setPlotLabel(opt.xvar.split(":")[1])
           xvar.setUnit(opt.xvar.split(":")[2])
           alist = ROOT.RooArgList(xvar)
@@ -62,7 +62,8 @@ else:
       w = ROOT.TFile(f).Get("wsig_13TeV")
       
       xvar = w.var(opt.xvar.split(":")[0])
-      print("test after xvar")
+      #print(xvar)
+      #print("test after xvar")
       xvar.setPlotLabel(opt.xvar.split(":")[1])
       xvar.setUnit(opt.xvar.split(":")[2])
       alist = ROOT.RooArgList(xvar)
@@ -123,7 +124,8 @@ for cat,f in inputFiles.items():
       for proc in opt.procs.split(","):
         k = "%s__%s"%(proc,year)
         print("k  ",k)
-        _id = "%s_%s_%s_%s"%(proc,year,cat,sqrts__)
+        #_id = "%s_%s_%s_%s"%(proc,year,cat,sqrts__) --orig
+        _id = "%s_%s_%s_%s"%("GG2H",year,"ALL",sqrts__)
         print("id   ",_id)
         norms[k] = w.function("%s_%s_normThisLumi"%(outputWSObjectTitle__,_id))
         print("%s_%s_normThisLumi"%(outputWSObjectTitle__,_id))
@@ -140,7 +142,8 @@ for cat,f in inputFiles.items():
   # Iterate over norms and extract data sets + pdfs
   for k, norm in norms.items():
     proc, year = k.split("__")
-    _id = "%s_%s_%s_%s"%(proc,year,cat,sqrts__)
+    #_id = "%s_%s_%s_%s"%(proc,year,cat,sqrts__) --orig
+    _id = "%s_%s_%s_%s"%("GG2H",year,"ALL",sqrts__)
     w.var("IntLumi").setVal(lumiScaleFactor*lumiMap[year])
 
     # Prune
@@ -149,6 +152,7 @@ for cat,f in inputFiles.items():
 
     # Make empty copy of dataset
     d = w.data("sig_mass_m%s_%s"%(opt.mass,_id))
+    print("d : sig_mass_m%s_%s"%(opt.mass,_id))
     d_rwgt = d.emptyClone(_id)
     
     # Calc norm factor

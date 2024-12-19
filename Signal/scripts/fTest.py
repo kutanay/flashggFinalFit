@@ -81,13 +81,15 @@ for proc in opt.procs.split(","):
   WSFileName = glob.glob("%s/output*M%s*%s.root"%(opt.inputWSDir,opt.mass,proc))[0]
   f = ROOT.TFile(WSFileName,"read")
   inputWS = f.Get(inputWSName__)
-  #d = reduceDataset(inputWS.data("%s_%s_%s_%s"%(procToData(proc.split("_")[0]),opt.mass,sqrts__,opt.cat)),aset) --orig
+  
   print("check")
   print(procToData(proc.split("_")[0]))
-  print(opt.mass)
+  print(opt.cat)
   print(sqrts__)
-  print("name : %s_%s_%s_NOTAG"%(procToData(proc.split("_")[0]),opt.mass,sqrts__))
+  
+  print("name : %s_%s_%s_%s"%(procToData(proc.split("_")[0]),opt.mass,sqrts__,opt.cat))
   print("check-end")
+  #d = reduceDataset(inputWS.data("%s_%s_%s_%s"%(procToData(proc.split("_")[0]),opt.mass,sqrts__,opt.cat)),aset)
   d = reduceDataset(inputWS.data("%s_%s_%s_NOTAG"%(procToData(proc.split("_")[0]),opt.mass,sqrts__)),aset)
   #d = reduceDataset(inputWS.data("ma35_125_13TeV_NOTAG"),aset)
   df.loc[len(df)] = [proc,d.sumEntries(),1,1]
@@ -107,6 +109,8 @@ for pidx, proc in enumerate(procsToFTest):
   WSFileName = glob.glob("%s/output*M%s*%s.root"%(opt.inputWSDir,opt.mass,proc))[0]
   f = ROOT.TFile(WSFileName,"read")
   inputWS = f.Get(inputWSName__)
+  print("test")
+  #d = reduceDataset(inputWS.data("%s_%s_%s_%s"%(procToData(proc.split("_")[0]),opt.mass,sqrts__,opt.cat)),aset)
   d = reduceDataset(inputWS.data("%s_%s_%s_NOTAG"%(procToData(proc.split("_")[0]),opt.mass,sqrts__)),aset) 
   #d = reduceDataset(inputWS.data("ma35_125_13TeV_NOTAG"),aset)
   datasets_RV[opt.mass] = splitRVWV(d,aset,mode="RV")

@@ -34,7 +34,8 @@ def get_options():
   parser.add_option("--ext", dest='ext', default='', help="Extension")
   parser.add_option("--proc", dest='proc', default='', help="Signal process")
   parser.add_option("--cat", dest='cat', default='', help="RECO category")
-  parser.add_option("--year", dest='year', default='2016', help="Year")
+  #parser.add_option("--year", dest='year', default='2016', help="Year")  --orig
+  parser.add_option("--year", dest='year', default='2022preEE', help="Year")
   parser.add_option("--analysis", dest='analysis', default='STXS', help="Analysis handle: used to specify replacement map and XS*BR normalisations")
   parser.add_option('--massPoints', dest='massPoints', default='120,125,130', help="Mass points to fit")
   parser.add_option('--skipBeamspotReweigh', dest='skipBeamspotReweigh', default=False, action="store_true", help="Skip beamspot reweigh to match beamspot distribution in data")
@@ -160,6 +161,7 @@ for mp in opt.massPoints.split(","):
   print(procToData(opt.proc.split("_")[0]))
   print(mp)
   print(sqrts__)
+  print(opt.year)
   print("name : %s_%s_%s_%s"%(procToData(procRVFit.split("_")[0]),mp,sqrts__,catRVFit))
   print("check-end")
   #d = reduceDataset(inputWS.data("%s_%s_%s_%s"%(procToData(procRVFit.split("_")[0]),mp,sqrts__,catRVFit)),aset) --orig
