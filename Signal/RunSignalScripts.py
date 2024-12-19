@@ -6,8 +6,8 @@ from optparse import OptionParser
 from collections import OrderedDict as od
 
 # Import tools from ./tools
-from tools.commonTools import *
-from tools.commonObjects import *
+from commonTools import *
+from commonObjects import *
 from tools.submissionTools import *
 
 def get_options():

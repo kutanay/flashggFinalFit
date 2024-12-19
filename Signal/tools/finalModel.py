@@ -52,9 +52,7 @@ def initialiseXSBR():
 
   # Make XS and BR
   SM.makeBR(decayMode)
-  for pm in productionModes: 
-      #print(pm)
-      SM.makeXS(pm,sqrts__)
+  for pm in productionModes: SM.makeXS(pm,sqrts__)
 
   # Store numpy arrays for each production mode in ordered dict
   xsbr = od()
@@ -64,21 +62,14 @@ def initialiseXSBR():
   mh = 120.
   while( mh < 130.05 ):
     for pm in productionModes: xsbr[pm].append(getXS(SM,MHVar,mh,pm))
-    #if((mh>124) and (mh<126)):
-    #    print("xs ", mh," :",getXS(SM,MHVar,mh,pm),"\n") #kt
     xsbr[decayMode].append(getBR(SM,MHVar,mh,decayMode))
-    #print("decay mode : ",decayMode)
     xsbr['constant'].append(1.)
     mh += 0.1
-  for pm in productionModes: 
-      #print("pm2 :",pm)
-      xsbr[pm] = np.asarray(xsbr[pm])
+  for pm in productionModes: xsbr[pm] = np.asarray(xsbr[pm])
   xsbr[decayMode] = np.asarray(xsbr[decayMode])
   xsbr['constant'] = np.asarray(xsbr['constant'])
   # If ggZH and ZH in production modes then make qqZH numpy array
   if('ggZH' in productionModes)&('ZH' in productionModes): xsbr['qqZH'] = xsbr['ZH']-xsbr['ggZH']
-  #print("XSBR : ")
-  #print(xsbr)
   return xsbr
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
@@ -86,8 +77,7 @@ class FinalModel:
   # Constructor
   def __init__(self,_ssfMap,_proc,_cat,_ext,_year,_sqrts,_datasets,_xvar,_MH,_MHLow,_MHHigh,_massPoints,_xsbrMap,_procSyst,_scales,_scalesCorr,_scalesGlobal,_smears,_doVoigtian,_useDCB,_skipVertexScenarioSplit,_skipSystematics):
     self.ssfMap = _ssfMap
-    #self.proc = _proc --orig
-    self.proc = "GG2H"
+    self.proc = _proc
     self.procSyst = _procSyst # Signal process used for systematics (useful for low stat cases)
     self.cat = _cat
     self.ext = _ext
@@ -129,7 +119,6 @@ class FinalModel:
     if not self.skipSystematics: self.buildNuisanceMap()
     # Build final pdfs
     if not self.skipVertexScenarioSplit: 
-      print("checkcheck")
       self.buildRVFracFunction()
       self.buildPdf(self.ssfMap['RV'],ext="rv",useDCB=self.useDCB)
       self.buildPdf(self.ssfMap['WV'],ext="wv",useDCB=self.useDCB)
@@ -140,7 +129,7 @@ class FinalModel:
     # Build final normalisation, datasets and extended Pdfs
     self.buildNorm()
     self.buildDatasets()
-    self.buildExtended()
+    self.buildExtended() 
 
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Functions to get XS, BR and EA splines for given proc/decay from map
@@ -148,26 +137,14 @@ class FinalModel:
     mh = np.linspace(120.,130.,101)
     # XS
     fp = self.xsbrMap[self.proc]['factor'] if 'factor' in self.xsbrMap[self.proc] else 1.
-    #fp = 1.0
     mp = self.xsbrMap[self.proc]['mode']
-    #print("from xsbr : ",self.XSBR[mp])
     xs = fp*self.XSBR[mp]
-    #print("xs : ",xs)
     self.Splines['xs'] = ROOT.RooSpline1D("fxs_%s_%s"%(self.proc,self.sqrts),"fxs_%s_%s"%(self.proc,self.sqrts),self.MH,len(mh),mh,xs)
-    #print("spline xs value : ",self.Splines['xs'])
     # BR
     fd = self.xsbrMap['decay']['factor'] if 'factor' in self.xsbrMap['decay'] else 1.
-    #fd = 1.0
-    #print("fd :", fd)
     md = self.xsbrMap['decay']['mode']
-    #print("md : ",md)
     br = fd*self.XSBR[md]
-    #print(self.XSBR[md]*0 +1.0)
-    print("BR : ",br)
-    br = br*0+1.0 #CHANGING ALL VALUES TO 1 //finalModel.py
     self.Splines['br'] = ROOT.RooSpline1D("fbr_%s"%self.sqrts,"fbr_%s"%self.sqrts,self.MH,len(mh),mh,br)
-    print("spline br:",self.Splines['br'])
-    #self.Splines['br']=1
 
   def buildEffAccSpline(self):
     # In HiggsDNA, eff x acc = sum of weights
@@ -189,14 +166,7 @@ class FinalModel:
     # Build rate function: encode affect of nuisances on signal rate
     self.buildRate("rate_%s"%self.name,skipSystematics=self.skipSystematics)
     finalPdfName = self.Pdfs['final'].GetName()
-    print("Building Final Normalization Step : ")
-    print("cross-section : ",self.Splines['xs'])
-    print("branching frac : ",self.Splines['br'])
-    print("ea : ",self.Splines['ea'])
-    print("int lumi : ",self.Functions['rate_%s'%self.name])
-    #self.Functions['final_norm'] = ROOT.RooFormulaVar("%s_norm"%finalPdfName,"%s_norm"%finalPdfName,"@0*@1*@2*@3",ROOT.RooArgList(self.Splines['xs'],self.Splines['br'],self.Splines['ea'],self.Functions['rate_%s'%self.name])) --orig
     self.Functions['final_norm'] = ROOT.RooFormulaVar("%s_norm"%finalPdfName,"%s_norm"%finalPdfName,"@0*@1*@2*@3",ROOT.RooArgList(self.Splines['xs'],self.Splines['br'],self.Splines['ea'],self.Functions['rate_%s'%self.name]))
-    print("normalization : ",self.Functions['final_norm'])
 
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Function for making nuisance param w/ info to add to Nuisance dict
@@ -277,7 +247,6 @@ class FinalModel:
     # Create function: if not skip systematics then add nuisance for RV fraction
     if self.skipSystematics:
       self.Functions['fracRV'] = ROOT.RooFormulaVar("%s_%s_rvFrac"%(outputWSObjectTitle__,self.name),"%s_%s_rvFrac"%(outputWSObjectTitle__,self.name),"TMath::Min(@0,1.0)",ROOT.RooArgList(self.Splines['fracRV']))
-      print("fracRV : ",self.Functions['fracRV'])
     else:
       self.NuisanceMap['other'] = od()
       self.makeNuisance('deltafracright',1.,1.,1.,'other')
@@ -434,8 +403,6 @@ class FinalModel:
   def buildExtended(self):
     finalPdfName = self.Pdfs['final'].GetName()
     self.Functions['final_normThisLumi'] = ROOT.RooFormulaVar("%s_normThisLumi"%finalPdfName,"%s_normThisLumi"%finalPdfName,"@0*@1*@2*@3*@4",ROOT.RooArgList(self.Splines['xs'],self.Splines['br'],self.Splines['ea'],self.Functions['rate_%s'%self.name],self.intLumi))
-    print("final_normThisLumi :")
-    print(self.Functions['final_normThisLumi'].getVal())
     self.Pdfs['final_extend'] = ROOT.RooExtendPdf("extend%s"%finalPdfName,"extend%s"%finalPdfName,self.Pdfs['final'],self.Functions['final_norm'])
     self.Pdfs['final_extendThisLumi'] = ROOT.RooExtendPdf("extend%sThisLumi"%finalPdfName,"extend%sThisLumi"%finalPdfName,self.Pdfs['final'],self.Functions['final_normThisLumi'])
  

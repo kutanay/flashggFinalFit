@@ -111,8 +111,6 @@ def writeSubFiles(_opts):
     if( _opts['mode'] == "trees2ws" ):
       # Extract list of files
       tfiles = glob.glob("%s/*.root"%_opts['inputDir'])
-      print("files check")
-      print(tfiles)
       # Create separate submission file per script
       for tfidx,tf in enumerate(tfiles):
         _f = open("%s/%s_%g.sh"%(_jobdir,_executable,tfidx),"w")
@@ -176,7 +174,6 @@ def submitFiles(_opts):
 
     if( _opts['mode'] == "trees2ws" )|( _opts['mode'] == 'trees2ws_data' ):
       tfiles = glob.glob("%s/*.root"%_opts['inputDir'])
-
       for tfidx in range(len(tfiles)):
         _subfile = "%s/%s_%g"%(_jobdir,_executable,tfidx)
         cmdLine = "qsub -q %s %s -o %s.log -e %s.err %s.sh"%(_opts['queue'],jobOptsStr,_subfile,_subfile,_subfile)

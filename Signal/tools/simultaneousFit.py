@@ -75,16 +75,14 @@ def calcChi2(x,pdf,d,errorType="Poisson",_verbose=False,fitRange=[110,140]):
 
   k = 0. # number of non empty bins (for calc degrees of freedom)
   normFactor = d.sumEntries()
-  #print("normfactor, ",d.sumEntries())
+  
   # Using numpy and poisson error
   bins, nPdf, nData, eDataSumW2 = [], [],[],[]
   for i in range(d.numEntries()):
-      
     p = d.get(i)
     x.setVal(p.getRealValue(x.GetName()))
     if( x.getVal() < fitRange[0] )|( x.getVal() > fitRange[1] ): continue
     ndata = d.weight()
-    #ndata = 1
     if ndata*ndata == 0: continue
     npdf = pdf.getVal(ROOT.RooArgSet(x))*normFactor*d.binVolume()
     eLo, eHi = ctypes.c_double(), ctypes.c_double()
@@ -142,14 +140,11 @@ def nChi2Addition(X,ssf,verbose=False):
   K = 0 # number of non empty bins
   C = len(X)-1 # number of fit params (-1 for MH)
   for mp,d in ssf.DataHists.items():
-    #print(d)
     ssf.MH.setVal(int(mp))
     chi2, k  = calcChi2(ssf.xvar,ssf.Pdfs['final'],d,_verbose=verbose)
     chi2sum += chi2
     K += k
   # N degrees of freedom
-  #print(K)
-  #print("chi2sum : ",chi2sum)
   ndof = K-C
   ssf.setNdof(ndof)
   return chi2sum
@@ -162,8 +157,6 @@ class SimultaneousFit:
     self.proc = _proc
     self.cat = _cat
     self.datasetForFit = _datasetForFit
-    #print("simul")
-    #print("check: ",self.datasetForFit['125'].numEntries())
     self.xvar = _xvar
     self.MH = _MH
     self.MHLow = _MHLow
@@ -177,7 +170,7 @@ class SimultaneousFit:
     # Prepare vars
     self.MH.setConstant(False)
     self.MH.setVal(125)
-    self.MH.setBins(80)
+    self.MH.setBins(10)
     self.dMH = ROOT.RooFormulaVar("dMH","dMH","@0-125.0",ROOT.RooArgList(self.MH)) 
     self.xvar.setVal(125)
     self.xvar.setBins(self.nBins)
@@ -220,21 +213,13 @@ class SimultaneousFit:
   # Function to normalise datasets and convert to RooDataHists for calc chi2
   def prepareDataHists(self):
     # Loop over datasets and normalise to 1
-    #print("printing sumentries")
-    #print(self.datasetForFit.items())
-    #print("1",self.datasetForFit['125'].numEntries())
     for k,d in self.datasetForFit.items():
-      sumw = d.sumEntries() 
-      #print("2",d.numEntries())
-      #print("2",d.sumEntries())
-      #sumw = 1
+      sumw = d.sumEntries()
       drw = d.emptyClone()
       self.Vars['weight'] = ROOT.RooRealVar("weight","weight",-10000,10000)
       for i in range(0,d.numEntries()):
         self.xvar.setVal(d.get(i).getRealValue(self.xvar.GetName()))
         self.Vars['weight'].setVal((1/sumw)*d.weight())
-        #print("weight : ",d.weight())
-        #self.Vars['weight'].setVal((1/1)*0.0014) # kt change
         drw.add(ROOT.RooArgSet(self.xvar,self.Vars['weight']),self.Vars['weight'].getVal())
       # Convert to RooDataHist
       self.DataHists[k] = ROOT.RooDataHist("%s_hist"%d.GetName(),"%s_hist"%d.GetName(),ROOT.RooArgSet(self.xvar),drw)
