@@ -101,7 +101,7 @@ class FinalModel:
     self.MHLow = _MHLow
     self.MHHigh = _MHHigh
     self.massPoints = _massPoints
-    self.intLumi = ROOT.RooRealVar("IntLumi","IntLumi",1.,0.,999999999.) # in pb^-1
+    self.intLumi = ROOT.RooRealVar("IntLumi","IntLumi",1000.,0.,999999999.) # in pb^-1 
     self.xsbrMap = _xsbrMap
     # Systematics
     self.skipSystematics = _skipSystematics
@@ -151,8 +151,11 @@ class FinalModel:
     #fp = 1.0
     mp = self.xsbrMap[self.proc]['mode']
     #print("from xsbr : ",self.XSBR[mp])
-    xs = fp*self.XSBR[mp]
-    #print("xs : ",xs)
+    xs = fp*self.XSBR[mp] 
+    #xs = 0.001*self.XSBR[mp]
+    print("FINALMODEL.PY, XS")
+    
+    print("xs : ",xs)
     self.Splines['xs'] = ROOT.RooSpline1D("fxs_%s_%s"%(self.proc,self.sqrts),"fxs_%s_%s"%(self.proc,self.sqrts),self.MH,len(mh),mh,xs)
     #print("spline xs value : ",self.Splines['xs'])
     # BR
@@ -433,7 +436,10 @@ class FinalModel:
   # Function to build extended Pdfs and normalisation with luminosity
   def buildExtended(self):
     finalPdfName = self.Pdfs['final'].GetName()
-    self.Functions['final_normThisLumi'] = ROOT.RooFormulaVar("%s_normThisLumi"%finalPdfName,"%s_normThisLumi"%finalPdfName,"@0*@1*@2*@3*@4",ROOT.RooArgList(self.Splines['xs'],self.Splines['br'],self.Splines['ea'],self.Functions['rate_%s'%self.name],self.intLumi))
+    print("finalpdfname : ",finalPdfName)
+    self.Functions['final_normThisLumi'] = ROOT.RooFormulaVar("%s_normThisLumi"%finalPdfName,"%s_normThisLumi"%finalPdfName,"4*@0*@1*@2*@3*@4",ROOT.RooArgList(self.Splines['xs'],self.Splines['br'],self.Splines['ea'],self.Functions['rate_%s'%self.name],self.intLumi))
+    print("final_norm :")
+    print(self.Functions['final_norm'].getVal())
     print("final_normThisLumi :")
     print(self.Functions['final_normThisLumi'].getVal())
     self.Pdfs['final_extend'] = ROOT.RooExtendPdf("extend%s"%finalPdfName,"extend%s"%finalPdfName,self.Pdfs['final'],self.Functions['final_norm'])
