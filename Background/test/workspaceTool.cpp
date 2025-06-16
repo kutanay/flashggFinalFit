@@ -106,6 +106,7 @@ int main(int argc, char *argv[]){
 
 
 	TFile *inFile = TFile::Open(filename_.c_str());
+    std::cout <<"Tanay check2" <<endl;
 	RooWorkspace *inWS;
 	RooRealVar *mass;
 	RooRealVar *intLumiREAD;
@@ -120,6 +121,7 @@ int main(int argc, char *argv[]){
 	std::cout << "[INFO] Workspace Open "<< inWS << std::endl;
 	mass = (RooRealVar*)inWS->var("CMS_hgg_mass");
 	intLumiREAD = (RooRealVar*)inWS->var("IntLumi");
+    std::cout << "ws lumi value : "<<intLumiREAD->getVal()<<std::endl;
 	std::cout << "[INFO] Got mass var from ws"<<std::endl;
 	//std::cout << "[INFO] Got intLumi var from ws, value "<< intLumiREAD->getVal()<<std::endl;
 
@@ -135,6 +137,7 @@ int main(int argc, char *argv[]){
 	//inWS->Write("cms_hgg_workspace");
 	
 	if (intlumi_){
+    std::cout<<"testing usage"<<std::endl;
 	intlumi.setVal(intlumi_);
 	inWS->import(intlumi);
 	RooRealVar *lumi = (RooRealVar*)inWS->var("IntLumi");

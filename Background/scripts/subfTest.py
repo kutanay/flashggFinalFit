@@ -11,7 +11,7 @@ parser.add_option("-s","--saveMultiPdf",default="",help="Save a multipdf workspa
 parser.add_option("-c","--cats",type="int",help="Number of categories to run")
 parser.add_option("--unblind",default=False,action="store_true",help="Unblind the mass spectrum in the range [115,135]")
 parser.add_option("--dryRun",default=False,action="store_true",help="Dont submit jobs")
-parser.add_option("-v","--verbose",default=False,action="store_true",help="Print more output")
+parser.add_option("-v","--verbose",default=True,action="store_true",help="Print more output") #changed from False to True
 parser.add_option("-S","--sqrts",type='int',default=8,help="Sqrt(S) COM energy for finding strings etc")
 (options,args) = parser.parse_args()
 
@@ -31,7 +31,7 @@ for cat in range(options.cats):
         execLine+=" %s "%options.Options
 	if options.unblind:
 		execLine += ' --unblind'
-	if options.verbose:
+	if (True):#options.verbose:
 		execLine += ' --verbose'
 	if options.sqrts==7:
 		execLine += ' --is2011 '

@@ -68,7 +68,7 @@ RooAbsPdf* getPdf(PdfModelBuilder &pdfsModel, string type, int order, const char
   else if (type=="Chebychev") return pdfsModel.getChebychev(Form("%s_cheb%d",ext,order),order); 
   else if (type=="Exponential") return pdfsModel.getExponentialSingle(Form("%s_exp%d",ext,order),order); 
   else if (type=="PowerLaw") return pdfsModel.getPowerLawSingle(Form("%s_pow%d",ext,order),order); 
-  else if (type=="Laurent") return pdfsModel.getLaurentSeries(Form("%s_lau%d",ext,order),order); 
+  //else if (type=="Laurent") return pdfsModel.getLaurentSeries(Form("%s_lau%d",ext,order),order); 
   else {
     cerr << "[ERROR] -- getPdf() -- type " << type << " not recognised." << endl;
     return NULL;
@@ -311,12 +311,14 @@ void plot(RooRealVar *mass, RooAbsPdf *pdf, RooDataSet *data, string name,vector
   pdf->plotOn(plot_chi2);
 
   int np = pdf->getParameters(*data)->getSize()+1; //Because this pdf has no extend
+  std::cout << "Tanay check, pdf: " << pdf->getParameters(*data) << std::endl;
   double chi2 = plot_chi2->chiSquare(np);
- 
+  std::cout << "Tanay check, pdf: " << pdf->GetName() << std::endl;
   *prob = getGoodnessOfFit(mass,pdf,data,name);
+  
   RooPlot *plot = mass->frame();
-  mass->setRange("unblindReg_1",mgg_low,115);
-  mass->setRange("unblindReg_2",135,mgg_high);
+  mass->setRange("unblindReg_1",mgg_low,110); //changes by kt
+  mass->setRange("unblindReg_2",130,mgg_high);
   if (BLIND) {
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
@@ -351,8 +353,8 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   leg->SetLineColor(1);
   RooPlot *plot = mass->frame();
 
-  mass->setRange("unblindReg_1",mgg_low,115);
-  mass->setRange("unblindReg_2",135,mgg_high);
+  mass->setRange("unblindReg_1",mgg_low,110);
+  mass->setRange("unblindReg_2",130,mgg_high);
   if (BLIND) {
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
@@ -416,7 +418,7 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   plotdata->GetPoint(ipoint, xtmp,ytmp);
   double bkgval = nomBkgCurve->interpolate(xtmp);
   if (BLIND) {
-   if ((xtmp > 115 ) && ( xtmp < 135) ) continue;
+   if ((xtmp > 110 ) && ( xtmp < 130) ) continue;
   }
   std::cout << "[INFO] plotdata->Integral() " <<  plotdata->Integral() << " ( bins " << npoints  << ") hbkgplots[i]->Integral() " << hbplottmp->Integral() << " (bins " << hbplottmp->GetNbinsX() << std::endl;
  double errhi = plotdata->GetErrorYhigh(ipoint);
@@ -463,8 +465,8 @@ void plot(RooRealVar *mass, map<string,RooAbsPdf*> pdfs, RooDataSet *data, strin
   leg->SetLineColor(0);
   RooPlot *plot = mass->frame();
 
-  mass->setRange("unblindReg_1",mgg_low,115);
-  mass->setRange("unblindReg_2",135,mgg_high);
+  mass->setRange("unblindReg_1",mgg_low,110);
+  mass->setRange("unblindReg_2",130,mgg_high);
   if (BLIND) {
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
     data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
@@ -610,6 +612,7 @@ int main(int argc, char* argv[]){
   string outfilename;
   bool is2011=false;
   bool verbose=false;
+  //bool verbose=true;
   bool saveMultiPdf=false;
   int isFlashgg_ =1;
   string flashggCatsStr_;
@@ -695,10 +698,12 @@ int main(int argc, char* argv[]){
 
 		if (isFlashgg_){
 			//intL  = (RooRealVar*)inWS->var("IntLumi");
+            std::cout<<"check3"<<std::endl;
 			intL  = intLumi_;
 			sqrts = (RooRealVar*)inWS->var("SqrtS");
 			if (!sqrts){ sqrts = new RooRealVar("SqrtS","SqrtS",13); }
 		std::cout << "[INFO] got intL and sqrts " << intL << ", " << sqrts << std::endl;
+            std::cout << " intlumi value  : "<< intL->getVal() << std::endl;
 
 
 		} else {
@@ -715,12 +720,12 @@ int main(int argc, char* argv[]){
 	functionClasses.push_back("Bernstein");
 	functionClasses.push_back("Exponential");
 	functionClasses.push_back("PowerLaw");
-	functionClasses.push_back("Laurent");
+	//functionClasses.push_back("Laurent");
 	map<string,string> namingMap;
 	namingMap.insert(pair<string,string>("Bernstein","pol"));
 	namingMap.insert(pair<string,string>("Exponential","exp"));
 	namingMap.insert(pair<string,string>("PowerLaw","pow"));
-	namingMap.insert(pair<string,string>("Laurent","lau"));
+	//namingMap.insert(pair<string,string>("Laurent","lau"));
 
 	// store results here
 
@@ -826,6 +831,12 @@ int main(int argc, char* argv[]){
 			int counter =0;
 			//	while (prob<0.05){
 			while (prob<0.05 && order < 7){ //FIXME
+                
+                if((order == 3) && (*funcType=="Exponential")){
+                    std::cout<<"Tanay skipped the third order exponential"<<std::endl;
+                    order++;
+                    continue;
+                }
 				RooAbsPdf *bkgPdf = getPdf(pdfsModel,*funcType,order,Form("ftest_pdf_%d_%s",(cat+catOffset),ext.c_str()));
 				if (!bkgPdf){
 					// assume this order is not allowed
@@ -837,6 +848,14 @@ int main(int argc, char* argv[]){
 					int fitStatus = 0;
 					//thisNll = fitRes->minNll();
         bkgPdf->Print();
+        if (order==3){
+            RooAbsPdf *bkgPdf1 = getPdf(pdfsModel,*funcType,order,Form("ftest_pdf_0_2022preEE_13TeV_exp3_e1"));
+            RooAbsPdf *bkgPdf2 = getPdf(pdfsModel,*funcType,order,Form("ftest_pdf_0_2022preEE_13TeV_exp3_e2"));
+            bkgPdf1->Print();
+            bkgPdf2->Print();
+            
+        }
+                    
 					runFit(bkgPdf,data,&thisNll,&fitStatus,/*max iterations*/3);//bkgPdf->fitTo(*data,Save(true),RooFit::Minimizer("Minuit2","minimize"));
 					if (fitStatus!=0) std::cout << "[WARNING] Warning -- Fit status for " << bkgPdf->GetName() << " at " << fitStatus <<std::endl;
        
@@ -883,6 +902,11 @@ int main(int argc, char* argv[]){
 				std::cout << "[INFO] Upper end Threshold for highest order function " << upperEnvThreshold <<std::endl;
 
 				while (prob<upperEnvThreshold){
+                    if((order == 3) && (*funcType=="Exponential")){
+                    std::cout<<"Tanay skipped the third order exponential again"<<std::endl;
+                    order++;
+                    continue;
+                    }
 					RooAbsPdf *bkgPdf = getPdf(pdfsModel,*funcType,order,Form("env_pdf_%d_%s",(cat+catOffset),ext.c_str()));
 					if (!bkgPdf ){
 						// assume this order is not allowed
@@ -962,6 +986,7 @@ int main(int argc, char* argv[]){
 			RooMultiPdf *pdf = new RooMultiPdf(Form("CMS_hgg_%s_%s_bkgshape",catname.c_str(),ext.c_str()),"all pdfs",catIndex,storedPdfs);
 			//RooRealVar nBackground(Form("CMS_hgg_%s_%s_bkgshape_norm",catname.c_str(),ext.c_str()),"nbkg",data->sumEntries(),0,10E8);
 			RooRealVar nBackground(Form("CMS_hgg_%s_%s_bkgshape_norm",catname.c_str(),ext.c_str()),"nbkg",data->sumEntries(),0,3*data->sumEntries());
+            std::cout <<"norm check "<< data->sumEntries()<<std::endl;
 			//nBackground.removeRange(); // bug in roofit will break combine until dev branch brought in
 			//double check the best pdf!
 			int bestFitPdfIndex = getBestFitFunction(pdf,data,&catIndex,!verbose);
