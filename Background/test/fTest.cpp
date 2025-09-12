@@ -68,7 +68,7 @@ RooAbsPdf* getPdf(PdfModelBuilder &pdfsModel, string type, int order, const char
   else if (type=="Chebychev") return pdfsModel.getChebychev(Form("%s_cheb%d",ext,order),order); 
   else if (type=="Exponential") return pdfsModel.getExponentialSingle(Form("%s_exp%d",ext,order),order); 
   else if (type=="PowerLaw") return pdfsModel.getPowerLawSingle(Form("%s_pow%d",ext,order),order); 
-  //else if (type=="Laurent") return pdfsModel.getLaurentSeries(Form("%s_lau%d",ext,order),order); 
+  else if (type=="Laurent") return pdfsModel.getLaurentSeries(Form("%s_lau%d",ext,order),order); 
   else {
     cerr << "[ERROR] -- getPdf() -- type " << type << " not recognised." << endl;
     return NULL;
@@ -348,7 +348,7 @@ void plot(RooRealVar *mass, RooAbsPdf *pdf, RooDataSet *data, string name,vector
 void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet *data, string name, vector<string> flashggCats_, int cat, int bestFitPdf=-1){
   
   int color[7] = {kBlue,kRed,kMagenta,kGreen+1,kOrange+7,kAzure+10,kBlack};
-  TLegend *leg = new TLegend(0.5,0.55,0.92,0.88);
+  TLegend *leg = new TLegend(0.3,0.55,0.92,0.88);
   leg->SetFillColor(0);
   leg->SetLineColor(1);
   RooPlot *plot = mass->frame();
@@ -361,7 +361,7 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
     data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible());
   }
   else data->plotOn(plot,Binning(mgg_high-mgg_low)); 
-  TCanvas *canv = new TCanvas();
+  TCanvas *canv = new TCanvas("","",800,800);
   ///start extra bit for ratio plot///
   RooHist *plotdata = (RooHist*)plot->getObject(plot->numItems()-1);
   bool doRatioPlot_=1;
@@ -369,7 +369,7 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   TPad *pad2 = new TPad("pad2","pad2",0,0,1,0.35);
   pad1->SetBottomMargin(0.18);
   pad2->SetTopMargin(0.00001);
-  pad2->SetBottomMargin(0.25);
+  pad2->SetBottomMargin(0.3);
   pad1->Draw();
   pad2->Draw();
   pad1->cd();
@@ -402,6 +402,7 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   plot->SetTitle(Form("Category %s",flashggCats_[cat].c_str()));
   if (BLIND) plot->SetMinimum(0.0001);
   plot->Draw();
+  plot->SetMaximum(100);
   leg->Draw("same");
   CMS_lumi( canv, 0, 0);
   ///start extra bit for ratio plot///
@@ -438,7 +439,7 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   hdummy->SetMinimum(hdatasub->GetHistogram()->GetMinimum()-1);
   hdummy->GetYaxis()->SetTitle("data - best fit PDF");
   hdummy->GetYaxis()->SetTitleSize(0.12);
-  hdummy->GetXaxis()->SetTitle("m_{#gamma#gamma} (GeV)");
+  hdummy->GetXaxis()->SetTitle("m_{#gamma#gamma#gamma#gamma} (GeV)");
   hdummy->GetXaxis()->SetTitleSize(0.12);
   hdummy->Draw("HIST");
   hdummy->GetYaxis()->SetNdivisions(808);
@@ -717,15 +718,17 @@ int main(int argc, char* argv[]){
 	}
 
 	vector<string> functionClasses;
+    functionClasses.push_back("Chebychev");
 	functionClasses.push_back("Bernstein");
 	functionClasses.push_back("Exponential");
 	functionClasses.push_back("PowerLaw");
-	//functionClasses.push_back("Laurent");
+	functionClasses.push_back("Laurent");
 	map<string,string> namingMap;
+    namingMap.insert(pair<string,string>("Chebychev","che"));
 	namingMap.insert(pair<string,string>("Bernstein","pol"));
 	namingMap.insert(pair<string,string>("Exponential","exp"));
 	namingMap.insert(pair<string,string>("PowerLaw","pow"));
-	//namingMap.insert(pair<string,string>("Laurent","lau"));
+	namingMap.insert(pair<string,string>("Laurent","lau"));
 
 	// store results here
 
@@ -832,11 +835,13 @@ int main(int argc, char* argv[]){
 			//	while (prob<0.05){
 			while (prob<0.05 && order < 7){ //FIXME
                 
+                /*
                 if((order == 3) && (*funcType=="Exponential")){
                     std::cout<<"Tanay skipped the third order exponential"<<std::endl;
                     order++;
                     continue;
                 }
+                */
 				RooAbsPdf *bkgPdf = getPdf(pdfsModel,*funcType,order,Form("ftest_pdf_%d_%s",(cat+catOffset),ext.c_str()));
 				if (!bkgPdf){
 					// assume this order is not allowed
@@ -848,13 +853,14 @@ int main(int argc, char* argv[]){
 					int fitStatus = 0;
 					//thisNll = fitRes->minNll();
         bkgPdf->Print();
+        /*
         if (order==3){
             RooAbsPdf *bkgPdf1 = getPdf(pdfsModel,*funcType,order,Form("ftest_pdf_0_2022preEE_13TeV_exp3_e1"));
             RooAbsPdf *bkgPdf2 = getPdf(pdfsModel,*funcType,order,Form("ftest_pdf_0_2022preEE_13TeV_exp3_e2"));
             bkgPdf1->Print();
             bkgPdf2->Print();
             
-        }
+        }*/
                     
 					runFit(bkgPdf,data,&thisNll,&fitStatus,/*max iterations*/3);//bkgPdf->fitTo(*data,Save(true),RooFit::Minimizer("Minuit2","minimize"));
 					if (fitStatus!=0) std::cout << "[WARNING] Warning -- Fit status for " << bkgPdf->GetName() << " at " << fitStatus <<std::endl;
