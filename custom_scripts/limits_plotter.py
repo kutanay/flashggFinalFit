@@ -1,8 +1,5 @@
-#limit potting script
-
 import ROOT
 import array
-
 
 ROOT.gStyle.SetOptStat(0)
 ROOT.gROOT.SetBatch(True)
@@ -10,28 +7,17 @@ ROOT.gROOT.SetBatch(True)
 mass = [15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 
 
-#limits for sigstr
-
-exp_025 = [0.0252, 0.0238, 0.0238, 0.0238, 0.0238, 0.0233, 0.0219, 0.0197, 0.0169, 0.0147]
-exp_160 = [0.0290, 0.0280, 0.0280, 0.0274, 0.0280, 0.0267, 0.0253, 0.0228, 0.0195, 0.0170]
-exp_500 = [0.0347, 0.0327, 0.0327, 0.0327, 0.0327, 0.0317, 0.0298, 0.0269, 0.0229, 0.0200]
-exp_840 = [0.0410, 0.0398, 0.0398, 0.0398, 0.0398, 0.0386, 0.0360, 0.0324, 0.0277, 0.0248]
-exp_975 = [0.0488, 0.0468, 0.0468, 0.0468, 0.0468, 0.0454, 0.0424, 0.0382, 0.0326, 0.0290]
-
+exp_025 = [1.1159, 0.9241, 0.9883, 0.9398, 1.0657, 1.0667, 0.9912, 0.8150, 0.7102, 0.6544]
+exp_160 = [1.3467, 1.1396, 1.2000, 1.1552, 1.2888, 1.2881, 1.1893, 0.9837, 0.8522, 0.7874]
+exp_500 = [1.6953, 1.4648, 1.5195, 1.4805, 1.6484, 1.6016, 1.4883, 1.2383, 1.0664, 0.9883]
+exp_840 = [2.1751, 1.9144, 1.9496, 1.9231, 2.1018, 2.0421, 1.8857, 1.5789, 1.3597, 1.2522]
+exp_975 = [2.7222, 2.4403, 2.4608, 2.4570, 2.6362, 2.5392, 2.3498, 1.9632, 1.7054, 1.5604]
 
 exp = exp_500
 err1_up = [hi - mid for hi, mid in zip(exp_840, exp_500)]
 err1_down = [mid - lo for lo, mid in zip(exp_160, exp_500)]
 err2_up = [hi - mid for hi, mid in zip(exp_975, exp_500)]
 err2_down = [mid - lo for lo, mid in zip(exp_025, exp_500)]
-
-#err1_up = []
-#err1_down = []
-#err2_up = []
-#err2_down = []
-#for i in range(len(exp_500)):
-#    err1_up.append()
-print(err1_up)
 
 # Convert to ROOT arrays
 x = array.array('d', mass)
@@ -49,9 +35,14 @@ c.SetLeftMargin(0.15)
 c.SetBottomMargin(0.15)
 
 # Frame
-frame = ROOT.TH1F("frame", " ;m_{a} [GeV];r", 1, 13, 62)
+frame = ROOT.TH1F(
+    "frame",
+    ";m_{a} [GeV];#sigma(pp #rightarrow H) #times BR(H #rightarrow aa #rightarrow #gamma#gamma#gamma#gamma) (fb)",
+    1, 13, 62
+)
+
 #frame.SetMinimum(0.01)
-frame.SetMaximum(0.1)
+frame.SetMaximum(6)
 frame.Draw()
 
 # ±2σ band
@@ -79,24 +70,27 @@ latex = ROOT.TLatex()
 latex.SetNDC()
 latex.SetTextFont(62)
 latex.SetTextSize(0.045)
-#latex.DrawLatex(0.18, 0.84, "CMS")
+
 latex.SetTextFont(52)
 latex.SetTextSize(0.04)
-#latex.DrawLatex(0.18, 0.78, "Preliminary")
-latex.SetTextFont(42)
-#latex.DrawLatex(0.62, 0.84, "#sqrt{s} = 13 TeV, L = 138 fb^{-1}")
+latex.DrawLatexNDC(0.18, 0.91, "#bf{CMS} Preliminary")
+latex.SetTextFont(40)
+#latex.DrawLatexNDC(0.62, 0.93, "34.70 fb^{-1} (13.6 TeV)")
+lumi = 34.70
+latex.DrawLatex(0.62,0.92,"13.6 TeV , %.2f fb^{-1}"%lumi)
+c.Update()
 
 # Legend
-leg = ROOT.TLegend(0.7, 0.7, 0.88, 0.88)
+leg = ROOT.TLegend(0.6, 0.7, 0.88, 0.88)
 leg.SetFillStyle(0)
 leg.SetBorderSize(0)
 leg.SetTextFont(42)
-leg.AddEntry(g_exp, "Expected", "l")
-leg.AddEntry(band1, "#pm1#sigma", "f")
-leg.AddEntry(band2, "#pm2#sigma", "f")
+leg.AddEntry(g_exp, "Median expected", "l")
+leg.AddEntry(band1, "68% CL expected", "f")
+leg.AddEntry(band2, "95% CL expected", "f")
 leg.Draw()
 
 # Save
 #c.SaveAs("limits-full-corrections-pre.png")
-c.SaveAs("limits-full-corrections-sig-str-pre.png")
-c.SaveAs("limits-full-corrections-sig-str-pre.pdf")
+c.SaveAs("limits.png")
+c.SaveAs("limits.pdf")
