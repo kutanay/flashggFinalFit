@@ -20,7 +20,8 @@ lumiMap = {
     '2018':59.83, 
     'combined':137.65, 
     'merged':137.65,
-    '2022preEE':8.00,
+    #'2022preEE':8.00, Made by kt for combined 2022
+    '2022preEE':34.70,
     '2022postEE':26.70
 }
 # If using ReReco samples then switch to lumiMap below (missing data in 2018 EGamma data set)

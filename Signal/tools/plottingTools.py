@@ -6,6 +6,9 @@ from commonObjects import *
 
 
 process, category = "",""
+
+chi2byndf = 0
+
 def LoadTranslations(jsonfilename):
     with open(jsonfilename) as jsonfile:
         return json.load(jsonfile)
@@ -111,6 +114,7 @@ def plotFTest(ssfs,_opt=1,_outdir='./',_extension='',_proc='',_cat='',_mass='125
     if k == "data": continue
     h.Draw("HIST SAME")
 
+  minchi2byndf = 1000.0
   # Legend & Text
   leg = ROOT.TLegend(0.55,0.3,0.86,0.8)
   leg.SetFillStyle(0)
@@ -120,7 +124,13 @@ def plotFTest(ssfs,_opt=1,_outdir='./',_extension='',_proc='',_cat='',_mass='125
   for k,ssf in ssfs.items(): 
     if int(k.split("_")[-1]) == _opt: leg.AddEntry(hists[k],"#bf{N_{gauss} = %s}: #chi^{2}/n(dof) = %.4f"%(k.split("_")[-1],ssf.getReducedChi2()),"L")
     else: leg.AddEntry(hists[k],"N_{gauss} = %s: #chi^{2}/n(dof) = %.4f"%(k.split("_")[-1],ssf.getReducedChi2()),"L")
+    if (minchi2byndf > ssf.getReducedChi2()):
+        minchi2byndf = ssf.getReducedChi2()
   leg.Draw("Same")
+
+  
+  #print("###############################################")
+  #print("KT : chi^2/NDF value : %f"%chi2byndf)
   # Add Latex
   lat = ROOT.TLatex()
   lat.SetTextFont(42)
@@ -132,6 +142,10 @@ def plotFTest(ssfs,_opt=1,_outdir='./',_extension='',_proc='',_cat='',_mass='125
   canv.Update()
   canv.SaveAs("%s/fTest_%s_%s_%s.png"%(_outdir,_cat,_proc,_extension))
   canv.SaveAs("%s/fTest_%s_%s_%s.pdf"%(_outdir,_cat,_proc,_extension))
+    
+  file_path = "%s/chi2byndf.txt"%_outdir
+  with open(file_path, "w") as f:
+    f.write(str(minchi2byndf))
 
 # Plot reduced chi2 vs nGauss
 def plotFTestResults(ssfs,_opt,_outdir="./",_extension='',_proc='',_cat='',_mass='125'):
@@ -149,7 +163,8 @@ def plotFTestResults(ssfs,_opt,_outdir="./",_extension='',_proc='',_cat='',_mass
     if y > ymax: ymax = y
     gr.SetPoint(p,x,y)
     p += 1
-
+  global chi2byndf
+  chi2byndf = ymax
   # Draw axes
   haxes = ROOT.TH1F("h_axes_%s_%s"%(_proc,_extension),"h_axes_%s_%s"%(_proc,_extension),xmax+1,0,xmax+1)
   haxes.SetTitle("")
@@ -181,6 +196,9 @@ def plotFTestResults(ssfs,_opt,_outdir="./",_extension='',_proc='',_cat='',_mass
   canv.Update()
   canv.SaveAs("%s/fTest_%s_%s_%s_chi2_vs_nGauss.png"%(_outdir,_cat,_proc,_extension))
   canv.SaveAs("%s/fTest_%s_%s_%s_chi2_vs_nGauss.pdf"%(_outdir,_cat,_proc,_extension))
+#  file_path = "%s/chi2byndf.txt"%_outdir
+#  with open(file_path, "w") as f:
+#    f.write(str(chi2byndf))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Signal fit plots
@@ -468,7 +486,9 @@ def plotInterpolation(_finalModel,_outdir='./',_massPoints='120,121,122,123,124,
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot splines
-def plotSplines(_finalModel,_outdir="./",_nominalMass='125',splinesToPlot=['xs','br','ea']):  #splinesToPlot=['xs','br','ea','fracRV'] --originial
+def plotSplines(_finalModel,_outdir="./",_nominalMass='125',splinesToPlot=['xs','br','ea']): #splinesToPlot=['xs','br','ea','fracRV'] --originial
+  #if (skipVertexScenarioSplit == False):
+  #    splinesToPlot=['xs','br','ea','fracRV']
   canv = ROOT.TCanvas()
   colorMap = {'xs':ROOT.kRed-4,'br':ROOT.kAzure+1,'ea':ROOT.kGreen+1,'fracRV':ROOT.kMagenta-7,'norm':ROOT.kBlack}
   grs = od()
@@ -601,6 +621,8 @@ def plotSignalModel(_hists,_opt,_outdir=".",offset=0.02):
     leg2.Draw("Same")
   else:
     year = _opt.years
+    if year == "2022preEE":
+      year = "2022"
     leg = ROOT.TLegend(0.15+offset,0.4,0.5+offset,0.82)
     leg.SetFillStyle(0)
     leg.SetLineColor(0)
@@ -660,10 +682,11 @@ def plotSignalModel(_hists,_opt,_outdir=".",offset=0.02):
   lat0.SetTextFont(42)
   lat0.SetTextAlign(11)
   lat0.SetNDC()
-  lat0.SetTextSize(0.045)
+  lat0.SetTextSize(0.04)
   lat0.DrawLatex(0.15,0.92,"#bf{CMS} #it{%s}"%_opt.label)
-  lat0.DrawLatex(0.77,0.92,"%s TeV"%(sqrts__.split("TeV")[0]))
-  lat0.DrawLatex(0.16+offset,0.83,"H #rightarrow #gamma#gamma")
+  #lat0.DrawLatex(0.77,0.92,"%s TeV"%(sqrts__.split("TeV")[0])) #original, changed by KT
+  lat0.DrawLatex(0.62,0.92,"13.6 TeV , %.2f fb^{-1}"%float(lumiMap[_opt.years]))
+  lat0.DrawLatex(0.16+offset,0.83,"H #rightarrow aa #rightarrow #gamma#gamma#gamma#gamma")
 
   # Load translations
   translateCats = {} if _opt.translateCats is None else LoadTranslations(_opt.translateCats)
@@ -685,9 +708,18 @@ def plotSignalModel(_hists,_opt,_outdir=".",offset=0.02):
   elif _opt.cats == 'wall': catStr, catExt = "#splitline{All categories}{S/(S+B) weighted}", "wall"
   elif len(_opt.cats.split(","))>1: procStr, procExt = "Multiple categories", "multipleCats"
   else: catStr, catExt = Translate(_opt.cats,translateCats), _opt.cats
- 
+
+
+  ##adding chi2/NDF to plots - KT #####
+  ftestfilename = _outdir.replace("/Plots", "/fTest/Plots") + "/chi2byndf.txt"
+  with open(ftestfilename, "r") as f:
+    chi2byndf = float(f.read().strip())
+      
   lat1.DrawLatex(0.85,0.86,"%s"%catStr)
+  if (yearStr == "2022preEE"):
+      yearStr = "2022"
   lat1.DrawLatex(0.83,0.8,"%s %s"%(procStr,yearStr))
+  lat1.DrawLatex( 0.85, 0.74 ,"#chi^2/NDF : %.3f"%chi2byndf)
   ROOT.gStyle.SetOptStat(111111)
   canv.Update()
 

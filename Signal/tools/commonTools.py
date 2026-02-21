@@ -20,12 +20,16 @@ def extractWSFileNames( _inputWSDir ):
     return False
   return glob.glob("%s/output_*.root"%_inputWSDir)
 
+
 def extractListOfProcs( _listOfWSFileNames ):
   procs = []
   for fName in _listOfWSFileNames:
+    #print(fName)
+    #print(fName.split("pythia8_"))
     p = fName.split("pythia8_")[1].split(".root")[0]
     if p not in procs: procs.append(p)
   return ",".join(procs)
+
 
 def extractListOfCats( _listOfWSFileNames ):
   f0 = ROOT.TFile(_listOfWSFileNames[0]) 

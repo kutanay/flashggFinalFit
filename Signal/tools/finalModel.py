@@ -179,6 +179,9 @@ class FinalModel:
     for mp in self.massPoints.split(","):
       mh.append(float(mp))
       sumw = self.datasets[mp].sumEntries()
+      print("##### Directly fromfinal fits code #####")
+      print("dataset : ",self.datasets[mp])
+      print("Efficiency X acceptance : %f"%sumw)
       ea.append(sumw) 
     # If single mass point then add MHLow and MHHigh dummy points for constant ea
     if len(ea) == 1: ea, mh = [ea[0],ea[0],ea[0]], [float(self.MHLow),mh[0],float(self.MHHigh)]
@@ -437,7 +440,7 @@ class FinalModel:
   def buildExtended(self):
     finalPdfName = self.Pdfs['final'].GetName()
     print("finalpdfname : ",finalPdfName)
-    self.Functions['final_normThisLumi'] = ROOT.RooFormulaVar("%s_normThisLumi"%finalPdfName,"%s_normThisLumi"%finalPdfName,"4*@0*@1*@2*@3*@4",ROOT.RooArgList(self.Splines['xs'],self.Splines['br'],self.Splines['ea'],self.Functions['rate_%s'%self.name],self.intLumi))
+    self.Functions['final_normThisLumi'] = ROOT.RooFormulaVar("%s_normThisLumi"%finalPdfName,"%s_normThisLumi"%finalPdfName,"@0*@1*@2*@3*@4",ROOT.RooArgList(self.Splines['xs'],self.Splines['br'],self.Splines['ea'],self.Functions['rate_%s'%self.name],self.intLumi))
     print("final_norm :")
     print(self.Functions['final_norm'].getVal())
     print("final_normThisLumi :")
