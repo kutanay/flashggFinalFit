@@ -862,6 +862,7 @@ int main(int argc, char* argv[]){
   
   //set ranges corresponding to blinded regions.
   mass->setRange("unblind_up",135,180);
+  std::cout<<"access test for blinding part"<<std::endl;
   mass->setRange("unblind_down",mhLow,115); 
   
   // and plot fake data in the unblinided region

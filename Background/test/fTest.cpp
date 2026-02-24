@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <cmath>
 
 #include "boost/program_options.hpp"
 #include "boost/lexical_cast.hpp"
@@ -54,9 +55,9 @@ namespace po = program_options;
 
 bool BLIND = true;
 bool runFtestCheckWithToys=false;
-int mgg_low =100;
+int mgg_low =110;
 int mgg_high =180;
-int nBinsForMass = 4*(mgg_high-mgg_low);
+int nBinsForMass = 8*(mgg_high-mgg_low);
 
 RooRealVar *intLumi_ = new RooRealVar("IntLumi","hacked int lumi", 1000.);
 
@@ -65,7 +66,7 @@ TRandom3 *RandomGen = new TRandom3();
 RooAbsPdf* getPdf(PdfModelBuilder &pdfsModel, string type, int order, const char* ext=""){
   
   if (type=="Bernstein") return pdfsModel.getBernstein(Form("%s_bern%d",ext,order),order); 
-  else if (type=="Chebychev") return pdfsModel.getChebychev(Form("%s_cheb%d",ext,order),order); 
+  //else if (type=="Chebychev") return pdfsModel.getChebychev(Form("%s_cheb%d",ext,order),order); 
   else if (type=="Exponential") return pdfsModel.getExponentialSingle(Form("%s_exp%d",ext,order),order); 
   else if (type=="PowerLaw") return pdfsModel.getPowerLawSingle(Form("%s_pow%d",ext,order),order); 
   else if (type=="Laurent") return pdfsModel.getLaurentSeries(Form("%s_lau%d",ext,order),order); 
@@ -241,6 +242,35 @@ double getGoodnessOfFit(RooRealVar *mass, RooAbsPdf *mpdf, RooDataSet *data, std
   int np = pdf->getParameters(*data)->getSize();
 
   double chi2 = plot_chi2->chiSquare("pdf","data",np);
+
+// extra lines for debugging chi2 values - Tanay
+    RooHist* hdata = plot_chi2->getHist("data");
+    RooCurve* hpdf = plot_chi2->getCurve("pdf");
+    
+    int npoints = hdata->GetN();
+    
+    std::cout << "\n[DEBUG] Bin-by-bin χ² contributions\n";
+    
+    for (int i = 0; i < npoints; i = i+40) {
+    
+        double x, ydata;
+        hdata->GetPoint(i, x, ydata);
+    
+        double ypdf = hpdf->Eval(x);
+    
+        double err = hdata->GetErrorY(i);
+    
+        if (err > 0) {
+            double chi2_i = pow(ydata - ypdf, 2) / pow(err, 2);
+            std::cout << "x = " << x
+                      << "  data = " << ydata
+                      << "  pdf = " << ypdf
+                      << "  err = " << err
+                      << "  contrib = " << chi2_i
+                      << std::endl;
+        }
+    }
+    
   std::cout << "[INFO] Calculating GOF for pdf " << pdf->GetName() << ", using " <<np << " fitted parameters" <<std::endl;
 
   // The first thing is to check if the number of entries in any bin is < 5 
@@ -254,26 +284,70 @@ double getGoodnessOfFit(RooRealVar *mass, RooAbsPdf *mpdf, RooDataSet *data, std
     RooArgSet preParams;
     params->snapshot(preParams);
     int ndata = data->sumEntries();
- 
+    std::cout << "checkpoint 1" << std::endl;
     int npass =0;
     std::vector<double> toy_chi2;
     for (int itoy = 0 ; itoy < ntoys ; itoy++){
     //  std::cout << "[INFO] " <<Form("\t.. %.1f %% complete\r",100*float(itoy)/ntoys) << std::flush;
       params->assignValueOnly(preParams);
+        if (itoy==0) {
+        //    std::cout << "checkpoint 1.1" << std::endl;
+        }
+
+      //std::cout << "checkpoint 1-1" << std::endl;
       int nToyEvents = RandomGen->Poisson(ndata);
+      //std::cout << "checkpoint 1-2" << std::endl;
+      //std::cout << *(pdf->getParameters(*data))<< std::endl;
+
+
+      double min = mass->getMin();
+      double max = mass->getMax();
+      //std::cout << "mass max value : "<<max<<std::endl;
+      //std::cout << "mass min value : "<<min<<std::endl;
+      int steps = 8;
+    
+      bool flag = true;
+      //int counter_tanay = 0;
+      for (int i = 0; i <= steps; ++i) {
+    
+      //    if (counter_tanay==0) {
+       //     std::cout << "checkpoint 1.2" << std::endl;
+       //       std::cout << counter_tanay << std::endl;
+       //     counter_tanay++;
+       // }
+          
+      double x = min + i * (max - min) / steps;
+      mass->setVal(x);
+      double val = pdf->getVal(RooArgSet(*mass));
+      //std::cout << "PDF value: " << val << " at mass = " << x << std::endl;
+      if (val < 0) { //(std::isnan(val))
+        std::cout << "PDF returned negative value: " << val << " at x = " << x << std::endl;
+        //return -999.0;
+            }
+      //std::cout << "Test line" << std::endl;
+      //std::cout << val << std::endl;    
+        }
+        
+
+       //std::cout << "#################################################################### "<<min<<std::endl;   
       RooDataHist *binnedtoy = pdf->generateBinned(RooArgSet(*mass),nToyEvents,0,1);
+      
+      //std::cout << "checkpoint 1-3" << std::endl;
       pdf->fitTo(*binnedtoy,RooFit::Minimizer("Minuit2","minimize"),RooFit::Minos(0),RooFit::Hesse(0),RooFit::PrintLevel(-1),RooFit::Strategy(0),RooFit::SumW2Error(kTRUE)); //FIXME
 
+      //std::cout << "checkpoint 2" << std::endl;
       RooPlot *plot_t = mass->frame();
       binnedtoy->plotOn(plot_t);
       pdf->plotOn(plot_t);//,RooFit::NormRange("fitdata_1,fitdata_2"));
-
+      
+      //std::cout << "checkpoint 3" << std::endl;
       double chi2_t = plot_t->chiSquare(np);
       if( chi2_t>=chi2) npass++;
       toy_chi2.push_back(chi2_t*(nBinsForMass-np));
       delete plot_t;
     }
-    std::cout << "[INFO] complete" << std::endl;
+    //std::cout << "checkpoint 4" << std::endl;
+    //std::cout << "[INFO] complete" << std::endl;
     prob = (double)npass / ntoys;
 
     TCanvas *can = new TCanvas();
@@ -311,18 +385,40 @@ void plot(RooRealVar *mass, RooAbsPdf *pdf, RooDataSet *data, string name,vector
   pdf->plotOn(plot_chi2);
 
   int np = pdf->getParameters(*data)->getSize()+1; //Because this pdf has no extend
-  std::cout << "Tanay check, pdf: " << pdf->getParameters(*data) << std::endl;
-  double chi2 = plot_chi2->chiSquare(np);
-  std::cout << "Tanay check, pdf: " << pdf->GetName() << std::endl;
-  *prob = getGoodnessOfFit(mass,pdf,data,name);
+  int ndf = nBinsForMass - np;
+  //std::cout << "Tanay check, pdf: " << pdf->getParameters(*data) << std::endl;
+  //double chi2 = plot_chi2->chiSquare(np);
+  double chi2_over_ndf = plot_chi2->chiSquare(np);    // RooFit returns chi2/ndf
+  double chi2 = chi2_over_ndf * ndf;                  // convert to absolute chi2
+
+  string chi2FileName = name + "_chi2.txt";
+  std::ofstream chi2file(chi2FileName);
   
+  chi2file << "PdfName Chi2 NDF Chi2OverNDF" << std::endl;
+  chi2file << pdf->GetName() << " "
+           << chi2 << " "
+           << ndf << " "
+           << chi2_over_ndf
+           << std::endl;
+  
+  chi2file.close();
+
+    
+  //std::cout << "Tanay check, pdf: " << pdf->GetName() << std::endl;
+  *prob = getGoodnessOfFit(mass,pdf,data,name);
+  //std::cout << "GOODNESS OF FIT VALUE" << *prob << std::endl;
+  if (*prob<0) {
+      std::cout << "Tanay skipped a function due to negative values"<<std::endl;
+      return;
+  }
+    
   RooPlot *plot = mass->frame();
-  mass->setRange("unblindReg_1",mgg_low,110); //changes by kt
-  mass->setRange("unblindReg_2",130,mgg_high);
+  mass->setRange("unblindReg_1",mgg_low,115); //changes by kt
+  mass->setRange("unblindReg_2",135,mgg_high);
   if (BLIND) {
-    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible());
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1")); //changed from mgg_high-mgg_low to nBinsForMass
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2")); //changed from mgg_high-mgg_low to nBinsForMass
+    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible()); //changed from mgg_high-mgg_low to nBinsForMass
   }
   else data->plotOn(plot,Binning(mgg_high-mgg_low));
 
@@ -353,14 +449,14 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   leg->SetLineColor(1);
   RooPlot *plot = mass->frame();
 
-  mass->setRange("unblindReg_1",mgg_low,110);
-  mass->setRange("unblindReg_2",130,mgg_high);
+  mass->setRange("unblindReg_1",mgg_low,115);
+  mass->setRange("unblindReg_2",135,mgg_high);
   if (BLIND) {
-    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible());
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1")); //changed from mgg_high-mgg_low to nBinsForMass
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2")); //changed from mgg_high-mgg_low to nBinsForMass
+    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible()); //changed from mgg_high-mgg_low to nBinsForMass
   }
-  else data->plotOn(plot,Binning(mgg_high-mgg_low)); 
+  else data->plotOn(plot,Binning(mgg_high-mgg_low));  //changed from mgg_high-mgg_low to nBinsForMass
   TCanvas *canv = new TCanvas("","",800,800);
   ///start extra bit for ratio plot///
   RooHist *plotdata = (RooHist*)plot->getObject(plot->numItems()-1);
@@ -402,11 +498,23 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   plot->SetTitle(Form("Category %s",flashggCats_[cat].c_str()));
   if (BLIND) plot->SetMinimum(0.0001);
   plot->Draw();
-  plot->SetMaximum(100);
+  plot->SetMaximum(5);
   leg->Draw("same");
   CMS_lumi( canv, 0, 0);
+/*
+  TLatex *lat = new TLatex();
+  lat->SetNDC();
+  lat->SetTextFont(42);
+  lat->SetTextSize(0.04);
+
+  lat->DrawLatex(0.18,0.85,
+    Form("H #rightarrow aa #rightarrow #gamma#gamma#gamma#gamma"));
+
+  lat->DrawLatex(0.18,0.80,
+    Form("m_{a} = %.0f GeV, %s", mA, year.c_str()));
+*/
   ///start extra bit for ratio plot///
-  TH1D *hbplottmp = (TH1D*) pdf->createHistogram("hbplottmp",*mass,Binning(mgg_high-mgg_low,mgg_low,mgg_high));
+  TH1D *hbplottmp = (TH1D*) pdf->createHistogram("hbplottmp",*mass,Binning(mgg_high-mgg_low,mgg_low,mgg_high)); //changed from mgg_high-mgg_low to nBinsForMass
   hbplottmp->Scale(plotdata->Integral());
   hbplottmp->Draw("same");
   int npoints = plotdata->GetN();
@@ -419,7 +527,7 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   plotdata->GetPoint(ipoint, xtmp,ytmp);
   double bkgval = nomBkgCurve->interpolate(xtmp);
   if (BLIND) {
-   if ((xtmp > 110 ) && ( xtmp < 130) ) continue;
+   if ((xtmp > 115 ) && ( xtmp < 135) ) continue;
   }
   std::cout << "[INFO] plotdata->Integral() " <<  plotdata->Integral() << " ( bins " << npoints  << ") hbkgplots[i]->Integral() " << hbplottmp->Integral() << " (bins " << hbplottmp->GetNbinsX() << std::endl;
  double errhi = plotdata->GetErrorYhigh(ipoint);
@@ -439,8 +547,10 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
   hdummy->SetMinimum(hdatasub->GetHistogram()->GetMinimum()-1);
   hdummy->GetYaxis()->SetTitle("data - best fit PDF");
   hdummy->GetYaxis()->SetTitleSize(0.12);
+  hdummy->GetYaxis()->SetLabelSize(0.08);
   hdummy->GetXaxis()->SetTitle("m_{#gamma#gamma#gamma#gamma} (GeV)");
   hdummy->GetXaxis()->SetTitleSize(0.12);
+  hdummy->GetXaxis()->SetLabelSize(0.08);
   hdummy->Draw("HIST");
   hdummy->GetYaxis()->SetNdivisions(808);
 
@@ -466,14 +576,14 @@ void plot(RooRealVar *mass, map<string,RooAbsPdf*> pdfs, RooDataSet *data, strin
   leg->SetLineColor(0);
   RooPlot *plot = mass->frame();
 
-  mass->setRange("unblindReg_1",mgg_low,110);
-  mass->setRange("unblindReg_2",130,mgg_high);
+  mass->setRange("unblindReg_1",mgg_low,115);
+  mass->setRange("unblindReg_2",135,mgg_high);
   if (BLIND) {
-    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2"));
-    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible());
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_1")); //changed from mgg_high-mgg_low to nBinsForMass
+    data->plotOn(plot,Binning(mgg_high-mgg_low),CutRange("unblindReg_2")); //changed from mgg_high-mgg_low to nBinsForMass
+    data->plotOn(plot,Binning(mgg_high-mgg_low),Invisible()); //changed from mgg_high-mgg_low to nBinsForMass
   }
-  else data->plotOn(plot,Binning(mgg_high-mgg_low));
+  else data->plotOn(plot,Binning(mgg_high-mgg_low)); //changed from mgg_high-mgg_low to nBinsForMass
 
   TObject *datLeg = plot->getObject(int(plot->numItems()-1));
 	if(flashggCats_.size() >0){
@@ -502,6 +612,8 @@ void plot(RooRealVar *mass, map<string,RooAbsPdf*> pdfs, RooDataSet *data, strin
   canv->SaveAs(Form("%s.pdf",name.c_str()));
   canv->SaveAs(Form("%s.png",name.c_str()));
   delete canv;
+
+    //adding section to save chi2 values
 }
 
 void transferMacros(TFile *inFile, TFile *outFile){
@@ -594,15 +706,22 @@ int getBestFitFunction(RooMultiPdf *bkg, RooDataSet *data, RooCategory *cat, boo
 }
 
 int main(int argc, char* argv[]){
+
+  if (!std::ifstream("chi2_results.txt")) {
+    std::ofstream chi2file_init("chi2_results.txt");
+    chi2file_init << "Mass PdfName Chi2 NDF Chi2OverNDF" << std::endl;
+    chi2file_init.close();
+    }
  
   setTDRStyle();
   writeExtraText = true;       // if extra text
   extraText  = "Preliminary";  // default extra text is "Preliminary"
   lumi_8TeV  = "19.1 fb^{-1}"; // default is "19.7 fb^{-1}"
   lumi_7TeV  = "4.9 fb^{-1}";  // default is "5.1 fb^{-1}"
-  lumi_sqrtS = "13 TeV";       // used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
+  lumi_sqrtS = "13.6 TeV";       // used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
   string year_ = "2016";
   //int year_ = 2017;
+//double mA;
 
   string fileName;
   int ncats;
@@ -621,7 +740,9 @@ int main(int argc, char* argv[]){
  bool isData_ =0;
 
   po::options_description desc("Allowed options");
-  desc.add_options()
+
+desc.add_options()
+    //("mA", po::value<double>(&mA_)->required(), "Pseudoscalar mass (GeV)")
     ("help,h",                                                                                  "Show help")
     ("infilename,i", po::value<string>(&fileName),                                              "In file name")
     ("ncats,c", po::value<int>(&ncats)->default_value(5),                                       "Number of categories")
@@ -643,6 +764,8 @@ int main(int argc, char* argv[]){
   po::variables_map vm;
   po::store(po::parse_command_line(argc,argv,desc),vm);
   po::notify(vm);
+  
+
   if (vm.count("help")) { cout << desc << endl; exit(1); }
   if (vm.count("is2011")) is2011=true;
 	if (vm.count("unblind")) BLIND=false;
@@ -718,13 +841,13 @@ int main(int argc, char* argv[]){
 	}
 
 	vector<string> functionClasses;
-    functionClasses.push_back("Chebychev");
+    //functionClasses.push_back("Chebychev");
 	functionClasses.push_back("Bernstein");
 	functionClasses.push_back("Exponential");
 	functionClasses.push_back("PowerLaw");
 	functionClasses.push_back("Laurent");
 	map<string,string> namingMap;
-    namingMap.insert(pair<string,string>("Chebychev","che"));
+    //namingMap.insert(pair<string,string>("Chebychev","che"));
 	namingMap.insert(pair<string,string>("Bernstein","pol"));
 	namingMap.insert(pair<string,string>("Exponential","exp"));
 	namingMap.insert(pair<string,string>("PowerLaw","pow"));
@@ -741,6 +864,10 @@ int main(int argc, char* argv[]){
 
 	PdfModelBuilder pdfsModel;
 	RooRealVar *mass = (RooRealVar*)inWS->var("CMS_hgg_mass");
+    mass->setRange(mgg_low, mgg_high);
+    mass->setMin(mgg_low);
+    mass->setMax(mgg_high);
+
 	std:: cout << "[INFO] Got mass from ws " << mass << std::endl;
 	pdfsModel.setObsVar(mass);
 	double upperEnvThreshold = 0.1; // upper threshold on delta(chi2) to include function in envelope (looser than truth function)
@@ -908,12 +1035,15 @@ int main(int argc, char* argv[]){
 				std::cout << "[INFO] Upper end Threshold for highest order function " << upperEnvThreshold <<std::endl;
 
 				while (prob<upperEnvThreshold){
-                    if((order == 3) && (*funcType=="Exponential")){
-                    std::cout<<"Tanay skipped the third order exponential again"<<std::endl;
+                    /*if((order <3) && (*funcType=="Chebychev")){
+                    std::cout<<"Tanay skipped the first order chebychev again"<<std::endl;
                     order++;
                     continue;
-                    }
+                    }*/
 					RooAbsPdf *bkgPdf = getPdf(pdfsModel,*funcType,order,Form("env_pdf_%d_%s",(cat+catOffset),ext.c_str()));
+                    std::cout<<"Tanay's print ##########################"<<std::endl;
+                    //std::cout<<bkgPdf->getVal() << std::endl;
+                    std::cout<<"Tanay's print ##########################"<<std::endl;
 					if (!bkgPdf ){
 						// assume this order is not allowed
 						if (order >6) { std::cout << " [WARNING] could not add ] " << std::endl; break ;}
@@ -938,7 +1068,7 @@ int main(int argc, char* argv[]){
 						// Calculate goodness of fit for the thing to be included (will use toys for lowstats)!
 						double gofProb =0; 
 						plot(mass,bkgPdf,data,Form("%s/%s%d_cat%d.pdf",outDir.c_str(),funcType->c_str(),order,(cat+catOffset)),flashggCats_,fitStatus,&gofProb);
-
+                        /*
 						if ((prob < upperEnvThreshold) ) { // Looser requirements for the envelope
 
 							if (gofProb > 0.01 || order == truthOrder ) {  // Good looking fit or one of our regular truth functions
@@ -955,7 +1085,48 @@ int main(int argc, char* argv[]){
 									MinimimNLLSoFar = myNll + bkgPdf->getVariables()->getSize();
 								}
 							}
-						}
+						}*/
+                        if ((prob < upperEnvThreshold)) { // Looser requirements for the envelope
+                        
+                        
+                            if (gofProb > 0.01 || order == truthOrder) {  // Good looking fit or truth function
+                        
+                                std::cout << "[INFO] --> Added to Envelope" << std::endl;
+                                // Tanay's custom print
+                                std::cout << "\n[DEBUG] --- Envelope Candidates - Tanay's Print ---" << std::endl;
+                                std::cout << "PDF Name           : " << bkgPdf->GetName() << std::endl;
+                                std::cout << "prob               : " << prob << std::endl;
+                                std::cout << "upperEnvThreshold  : " << upperEnvThreshold << std::endl;
+                                std::cout << "order              : " << order << std::endl;
+                                std::cout << "truthOrder         : " << truthOrder << std::endl;
+                                std::cout << "gofProb            : " << gofProb << std::endl;
+                                std::cout << "myNLL              : " << myNll << std::endl;
+                                std::cout << "2xNLL + nParams    : " 
+                                          << myNll + bkgPdf->getVariables()->getSize() 
+                                          << std::endl;
+                                
+                                allPdfs.insert(pair<string,RooAbsPdf*>(
+                                    Form("%s%d",funcType->c_str(),order), bkgPdf));
+                        
+                                storedPdfs.add(*bkgPdf);
+                                pdforders.push_back(order);
+                        
+                                // Keep track but redo later
+                                if ((myNll + bkgPdf->getVariables()->getSize()) < MinimimNLLSoFar) {
+                                    simplebestFitPdfIndex = storedPdfs.getSize() - 1;
+                                    MinimimNLLSoFar = myNll + bkgPdf->getVariables()->getSize();
+                                }
+                            }
+                            else {
+                                std::cout << "[INFO] --> Rejected by GOF requirement" << std::endl;
+                            }
+                        }
+                        else {
+                            std::cout << "\n[DEBUG] --- Rejected by prob threshold ---" << std::endl;
+                            std::cout << "PDF Name           : " << bkgPdf->GetName() << std::endl;
+                            std::cout << "prob               : " << prob << std::endl;
+                            std::cout << "upperEnvThreshold  : " << upperEnvThreshold << std::endl;
+                        }
 
 						prev_order=order;
 						prev_pdf=bkgPdf;

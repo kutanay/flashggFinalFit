@@ -78,14 +78,28 @@ RooAbsPdf* PdfModelBuilder::getChebychev(string prefix, int order){
   for (int i=0; i<order; i++){
     string name = Form("%s_p%d",prefix.c_str(),i);
     //params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(),1.0,0.,5.)));
-    RooRealVar *param = new RooRealVar(name.c_str(),name.c_str(),0.01,-10.,10.);
-    //RooFormulaVar *form = new RooFormulaVar(Form("%s_sq",name.c_str()),Form("%s_sq",name.c_str()),"@0*@0",RooArgList(*param));
+      RooRealVar *param = nullptr;
+    if (order<2)
+    {
+        param = new RooRealVar(name.c_str(),name.c_str(),0.01,-0.0055,10.);
+    }
+    else{
+        param = new RooRealVar(name.c_str(),name.c_str(),0.01,-10.,10.);
+    }
+      //RooFormulaVar *form = new RooFormulaVar(Form("%s_sq",name.c_str()),Form("%s_sq",name.c_str()),"@0*@0",RooArgList(*param));
     params.insert(pair<string,RooRealVar*>(name,param));
     //prods.insert(pair<string,RooFormulaVar*>(name,form));
     coeffList->add(*params[name]);
   }
   //RooChebychev *cheb = new RooChebychev(prefix.c_str(),prefix.c_str(),*obs_var,*coeffList);
   RooPolynomial *cheb = new RooPolynomial(prefix.c_str(),prefix.c_str(),*obs_var,*coeffList);
+
+  std::cout << "Tanay's print ############################## printing coeflist, chebychev"<<std::endl;
+    std::cout << *coeffList<<std::endl;
+    std::cout << coeffList<<std::endl;
+    std::cout << *obs_var<<std::endl;
+    std::cout << obs_var<<std::endl;
+    std::cout << "Tanay's print ############################## printing coeflist, chebychev"<<std::endl;
   return cheb;
   //bkgPdfs.insert(pair<string,RooAbsPdf*>(bern->GetName(),bern));
 
