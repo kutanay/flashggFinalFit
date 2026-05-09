@@ -1,0 +1,130 @@
+ <<< Combine >>> 
+ <<< v9.2.1 >>>
+>>> Random number generator seed is 123456
+>>> Method used is AsymptoticLimits
+check 5
+<HiggsAnalysis.CombinedLimit.Datacard.Datacard object at 0x7f2c539620a0>
+check 2
+{ {"CAT1" , 0} }
+
+
+chcek 4
+['pdfindex_CAT1_2022preEE_13TeV']
+datacard structure
+
+from HiggsAnalysis.CombinedLimit.DatacardParser import *
+from HiggsAnalysis.CombinedLimit.ModelTools import *
+from HiggsAnalysis.CombinedLimit.ShapeTools import *
+from HiggsAnalysis.CombinedLimit.PhysicsModel import *
+
+from sys import exit
+from optparse import OptionParser
+parser = OptionParser()
+addDatacardParserOptions(parser)
+options,args = parser.parse_args()
+options.bin = True # make a binary workspace
+
+DC = Datacard()
+MB = None
+
+############## Setup the datacard (must be filled in) ###########################
+
+DC.bins = 	 ['CAT1'] # <class 'list'>
+DC.obs = 	 {'CAT1': 790.0} # <class 'dict'>
+DC.processes = 	 ['ma60_2022preEE_hgg', 'bkg_mass'] # <class 'list'>
+DC.signals = 	 ['ma60_2022preEE_hgg'] # <class 'list'>
+DC.isSignal = 	 {'ma60_2022preEE_hgg': True, 'bkg_mass': False} # <class 'dict'>
+DC.keyline = 	 [('CAT1', 'ma60_2022preEE_hgg', True), ('CAT1', 'bkg_mass', False)] # <class 'list'>
+DC.exp = 	 {'CAT1': {'ma60_2022preEE_hgg': 132000.0, 'bkg_mass': 1.0}} # <class 'dict'>
+DC.systs = 	 [('CMS_hgg_nuisance_Et_dependent_Smearing_2022preEE', False, 'param', ['0.0', '1.0'], []), ('CMS_hgg_nuisance_Et_dependent_Scale_2022preEE', False, 'param', ['0.0', '1.0'], []), ('MCStat_2022preEE_CAT1', False, 'lnN', [], {'CAT1': {'ma60_2022preEE_hgg': 1.004, 'bkg_mass': 0.0}})] # <class 'list'>
+DC.shapeMap = 	 {'CAT1': {'ma60_2022preEE_hgg': ['./Models/may26-mva/signal/CMS-HGG_sigfit_datacard_may26_mva_ma60_2022preEE_CAT1.root', 'wsig_13TeV:hggpdfsmrel_GG2H_2022preEE_CAT1_13TeV'], 'bkg_mass': ['./Models/may26-mva/background/CMS-HGG_multipdf_CAT1.root', 'multipdf:CMS_hgg_CAT1_2022preEE_13TeV_bkgshape'], 'data_obs': ['./Models/may26-mva/background/CMS-HGG_multipdf_CAT1.root', 'multipdf:roohist_data_mass_CAT1']}} # <class 'dict'>
+DC.hasShapes = 	 True # <class 'bool'>
+DC.flatParamNuisances =  {} # <class 'dict'>
+DC.rateParams =  {'CAT1ANDma60_2022preEE_hgg': [[['r', '1.0', 0], '']]} # <class 'dict'>
+DC.extArgs = 	 {} # <class 'dict'>
+DC.rateParamsOrder 	=  {'r'} # <class 'set'>
+DC.frozenNuisances 	=  set() # <class 'set'>
+DC.systematicsShapeMap =  {} # <class 'dict'>
+DC.systematicsParamMap =  {} # <class 'dict'>
+DC.systIDMap =  {'CMS_hgg_nuisance_Et_dependent_Smearing_2022preEE': [0], 'CMS_hgg_nuisance_Et_dependent_Scale_2022preEE': [1], 'MCStat_2022preEE_CAT1': [2]} # <class 'dict'>
+DC.nuisanceEditLines 	=  [] # <class 'list'>
+DC.binParFlags 	=  {} # <class 'dict'>
+DC.groups 	=  {} # <class 'dict'>
+DC.discretes 	=  ['pdfindex_CAT1_2022preEE_13TeV'] # <class 'list'>
+DC.pdfnorms 	=  {'hggpdfsmrel_GG2H_2022preEE_CAT1_13TeV_norm': 'shapeSig_ma60_2022preEE_hgg_CAT1__norm', 'CMS_hgg_CAT1_2022preEE_13TeV_bkgshape_norm': 'shapeBkg_bkg_mass_CAT1__norm'} # <class 'dict'>
+
+
+###### User defined options #############################################
+
+options.out 	 = "combine_workspace.root"  	# Output workspace name
+options.fileName = "./" 			# Path to input ROOT files
+options.verbose  = "1" 				# Verbosity
+
+##########################################################################
+
+if DC.hasShapes:
+    MB = ShapeBuilder(DC, options)
+else:
+    MB = CountingModelBuilder(DC, options)
+
+# Set physics models
+MB.setPhysics(defaultModel)
+MB.doModel()
+
+None
+check 2
+RooRealVar::CMS_hgg_nuisance_Et_dependent_Smearing_2022preEE = 0 +/- 1  L(-4 - 4) 
+
+
+
+check 2
+RooRealVar::CMS_hgg_nuisance_Et_dependent_Scale_2022preEE = 0 +/- 1  L(-4 - 4) 
+
+
+
+check 2
+RooRealVar::MCStat_2022preEE_CAT1 = 0 +/- 1  L(-7 - 7) 
+
+
+
+check 2
+RooRealVar::CMS_hgg_nuisance_Et_dependent_Smearing_2022preEE_In = 0 C  L(-4 - 4) 
+
+
+
+check 2
+RooRealVar::CMS_hgg_nuisance_Et_dependent_Scale_2022preEE_In = 0 C  L(-4 - 4) 
+
+
+
+check 2
+RooRealVar::MCStat_2022preEE_CAT1_In = 0 C  L(-7 - 7) 
+
+
+
+check 3
+discrete_param_set :  ['pdfindex_CAT1_2022preEE_13TeV']
+access test
+cpar :  pdfindex_CAT1_2022preEE_13TeV
+cpar2 :  { {"_pdf0" , 0}, {"_pdf1" , 1}, {"_pdf2" , 2}, {"_pdf3" , 3} }
+check 2
+{ {"_pdf0" , 0}, {"_pdf1" , 1}, {"_pdf2" , 2}, {"_pdf3" , 3} }
+
+
+runlimitexpected access check --kt
+expectedlimits check 1 --kt
+expectedlimits check 2 --kt
+expectedlimits check 3 --kt
+expectedlimits check 4 --kt
+expectedlimits check 5 --kt
+expectedlimits check 6 --kt
+expectedlimits check 7 --kt
+
+ -- AsymptoticLimits ( CLs ) --
+Expected  2.5%: r < 0.8010
+Expected 16.0%: r < 0.9271
+Expected 50.0%: r < 1.1055
+Expected 84.0%: r < 1.3302
+Expected 97.5%: r < 1.5563
+
+Done in 0.01 min (cpu), 0.01 min (real)

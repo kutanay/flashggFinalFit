@@ -14,7 +14,7 @@ crabConfig_*
 *.dat
 
 # ROOT-related files
-*.root
+#*.root
 *.C
 *_cc.d
 *_cc.so
@@ -25,15 +25,15 @@ crabConfig_*
 AutoDict_*
 
 # Other temp files
-*.txt
+#*.txt
 *.log
-*.png
-*.pdf
+#*.png
+#*.pdf
 *.out
 *.tmp
 *.pcm
 *.o
 
 # Output dirs in signal and bkg
-Signal/outdir_*
-Background/outdir_*
+#Signal/outdir_*
+#Background/outdir_*
