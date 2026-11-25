@@ -1,0 +1,92 @@
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-15.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-20.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-25.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-30.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-35.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-40.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-45.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-50.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-55.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-60.py --mode fTest --modeOpts "--doPlots"
+
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-15.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-20.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-25.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-30.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-35.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-40.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-45.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-50.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-55.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-60.py --mode calcPhotonSyst
+
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-15.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-20.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-25.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-30.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-35.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-40.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-45.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-50.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-55.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-pre/config-bdt-60.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+
+
+python3 RunPlotter.py --procs ma15 --years 2022preEE --ext bdt-15-pre --cats BDT_15_pre
+python3 RunPlotter.py --procs ma20 --years 2022preEE --ext bdt-20-pre --cats BDT_20_pre
+python3 RunPlotter.py --procs ma25 --years 2022preEE --ext bdt-25-pre --cats BDT_25_pre
+python3 RunPlotter.py --procs ma30 --years 2022preEE --ext bdt-30-pre --cats BDT_30_pre
+python3 RunPlotter.py --procs ma35 --years 2022preEE --ext bdt-35-pre --cats BDT_35_pre
+python3 RunPlotter.py --procs ma40 --years 2022preEE --ext bdt-40-pre --cats BDT_40_pre
+python3 RunPlotter.py --procs ma45 --years 2022preEE --ext bdt-45-pre --cats BDT_45_pre
+python3 RunPlotter.py --procs ma50 --years 2022preEE --ext bdt-50-pre --cats BDT_50_pre
+python3 RunPlotter.py --procs ma55 --years 2022preEE --ext bdt-55-pre --cats BDT_55_pre
+python3 RunPlotter.py --procs ma60 --years 2022preEE --ext bdt-60-pre --cats BDT_60_pre
+
+
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-15.py --mode fTest --modeOpts "--doPlots"
+
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-15.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-15.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+
+
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-15.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-20.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-25.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-30.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-35.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-40.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-45.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-50.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-55.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-60.py --mode fTest --modeOpts "--doPlots"
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-15.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-20.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-25.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-30.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-35.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-40.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-45.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-50.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-55.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-60.py --mode calcPhotonSyst
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-15.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-20.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-25.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-30.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-35.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-40.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-45.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-50.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-55.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunSignalScripts.py --inputConfig config-bdt-combined/config-bdt-60.py --mode signalFit --modeOpts "--doPlots --skipVertexScenarioSplit" --groupSignalFitJobsByCat
+python3 RunPlotter.py --procs ma15 --years 2022preEE --ext bdt-15-combined --cats BDT_15_Combined
+python3 RunPlotter.py --procs ma20 --years 2022preEE --ext bdt-20-combined --cats BDT_20_Combined
+python3 RunPlotter.py --procs ma25 --years 2022preEE --ext bdt-25-combined --cats BDT_25_Combined
+python3 RunPlotter.py --procs ma30 --years 2022preEE --ext bdt-30-combined --cats BDT_30_Combined
+python3 RunPlotter.py --procs ma35 --years 2022preEE --ext bdt-35-combined --cats BDT_35_Combined
+python3 RunPlotter.py --procs ma40 --years 2022preEE --ext bdt-40-combined --cats BDT_40_Combined
+python3 RunPlotter.py --procs ma45 --years 2022preEE --ext bdt-45-combined --cats BDT_45_Combined
+python3 RunPlotter.py --procs ma50 --years 2022preEE --ext bdt-50-combined --cats BDT_50_Combined
+python3 RunPlotter.py --procs ma55 --years 2022preEE --ext bdt-55-combined --cats BDT_55_Combined
+python3 RunPlotter.py --procs ma60 --years 2022preEE --ext bdt-60-combined --cats BDT_60_Combined
